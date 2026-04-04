@@ -4,7 +4,16 @@
             <div class="logo">
                 <span class="logo-text" @click.prevent="goToHome">TravelStay</span>
             </div>
-            <div class="nav-links">
+            
+            <!-- Hamburger Menu Button (Mobile) -->
+            <button class="hamburger" @click="toggleMobileMenu" :class="{ active: showMobileMenu }">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            
+            <!-- Desktop Navigation -->
+            <div class="nav-links" :class="{ 'mobile-open': showMobileMenu }">
                 <a href="#" class="nav-link" @click.prevent="goToBookings">
                     <img width="25" height="25" src="https://img.icons8.com/windows/32/calendar-minus.png" alt="calendar-minus"/>
                     Đặt phòng của tôi
@@ -13,6 +22,7 @@
                     <a href="#" class="nav-link user-icon" @click.prevent="toggleMenu">
                         <img width="25" height="25" src="https://img.icons8.com/windows/32/gender-neutral-user.png"
                             alt="gender-neutral-user" />
+                        <span class="mobile-only">Tài khoản</span>
                     </a>
                     <div v-if="showMenu" class="dropdown-menu">
                         <div class="dropdown-header">
@@ -34,6 +44,9 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Mobile Menu Overlay -->
+            <div class="mobile-overlay" v-if="showMobileMenu" @click="closeMobileMenu"></div>
         </div>
     </nav>
 </template>
@@ -44,12 +57,29 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const showMenu = ref(false)
+const showMobileMenu = ref(false)
 
 const goToHome = () => {
+    closeMobileMenu()
     router.push('/home')
 }
+
 const toggleMenu = () => {
     showMenu.value = !showMenu.value
+}
+
+const toggleMobileMenu = () => {
+    showMobileMenu.value = !showMobileMenu.value
+    if (showMobileMenu.value) {
+        document.body.style.overflow = 'hidden'
+    } else {
+        document.body.style.overflow = ''
+    }
+}
+
+const closeMobileMenu = () => {
+    showMobileMenu.value = false
+    document.body.style.overflow = ''
 }
 
 const closeMenu = (e) => {
@@ -60,11 +90,13 @@ const closeMenu = (e) => {
 
 const goToProfile = () => {
     showMenu.value = false
+    closeMobileMenu()
     router.push('/profile')
 }
 
 const goToBookings = () => {
     showMenu.value = false
+    closeMobileMenu()
     router.push('/bookings')
 }
 
@@ -74,6 +106,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     document.removeEventListener('click', closeMenu)
+    document.body.style.overflow = ''
 })
 
 const logout = () => {
@@ -209,5 +242,212 @@ const logout = () => {
     height: 1px;
     background: #f0f0f0;
     margin: 0.5rem 0;
+}
+
+/* Hamburger Menu Button */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 28px;
+    height: 24px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 110;
+}
+
+.hamburger-line {
+    width: 100%;
+    height: 3px;
+    background: #333;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.hamburger.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(6px, 6px);
+}
+
+.hamburger.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Mobile Overlay */
+.mobile-overlay {
+    display: none;
+}
+
+/* Mobile Only Text */
+.mobile-only {
+    display: none;
+}
+
+/* ==================== RESPONSIVE STYLES ==================== */
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+    .nav-content {
+        padding: 1rem 1.5rem;
+    }
+    
+    .nav-links {
+        gap: 1.5rem;
+    }
+}
+
+/* Tablet Portrait (768px) */
+@media (max-width: 768px) {
+    .hamburger {
+        display: flex;
+    }
+    
+    .nav-content {
+        padding: 0.875rem 1rem;
+    }
+    
+    .logo {
+        font-size: 1.25rem;
+    }
+    
+    .nav-links {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 280px;
+        height: 100vh;
+        background: white;
+        flex-direction: column;
+        padding: 80px 24px 24px;
+        gap: 0;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+        transition: transform 0.3s ease;
+        z-index: 105;
+        align-items: stretch;
+        transform: translateX(100%);
+        visibility: hidden;
+    }
+    
+    .nav-links.mobile-open {
+        transform: translateX(0);
+        visibility: visible;
+    }
+    
+    .nav-link {
+        padding: 16px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .nav-link img {
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+    }
+    
+    .nav-link:last-child {
+        border-bottom: none;
+    }
+    
+    .mobile-only {
+        display: inline;
+    }
+    
+    .user-menu {
+        width: 100%;
+    }
+    
+    .user-menu .nav-link {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .dropdown-menu {
+        position: static;
+        box-shadow: none;
+        border: 1px solid #e5e7eb;
+        margin-top: 8px;
+        animation: none;
+    }
+    
+    .mobile-overlay {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 100;
+    }
+}
+
+/* Mobile (640px) */
+@media (max-width: 640px) {
+    .nav-content {
+        padding: 0.75rem 1rem;
+    }
+    
+    .logo {
+        font-size: 1.125rem;
+    }
+    
+    .nav-links {
+        width: 100%;
+        transform: translateX(100%);
+        padding: 70px 20px 20px;
+    }
+    
+    .nav-links.mobile-open {
+        transform: translateX(0);
+    }
+    
+    .nav-link {
+        padding: 14px 0;
+        font-size: 0.95rem;
+    }
+    
+    .dropdown-header {
+        padding: 0.875rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Small Mobile (480px) */
+@media (max-width: 480px) {
+    .hamburger {
+        width: 24px;
+        height: 20px;
+    }
+    
+    .hamburger-line {
+        height: 2px;
+    }
+    
+    .hamburger.active .hamburger-line:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+    
+    .hamburger.active .hamburger-line:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+    
+    .nav-link img {
+        width: 22px;
+        height: 22px;
+    }
 }
 </style>

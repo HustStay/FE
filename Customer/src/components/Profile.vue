@@ -547,4 +547,159 @@ onMounted(() => {
         overflow-x: auto;
     }
 }
+
+@media (max-width: 640px) {
+    .profile-content {
+        padding: 5rem 1rem 2rem;
+    }
+    
+    .profile-header-card {
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+    
+    .avatar-wrapper {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .user-name {
+        font-size: 1.5rem;
+    }
+    
+    .user-email {
+        font-size: 1rem;
+    }
+    
+    .meta-item {
+        font-size: 0.875rem;
+    }
+    
+    .tabs-container {
+        gap: 0.5rem;
+    }
+    
+    .tab-btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    
+    .tab-content {
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+    }
+    
+    .section-subtitle {
+        font-size: 0.875rem;
+    }
+    
+    .form-label {
+        font-size: 0.875rem;
+    }
+    
+    .form-input {
+        padding: 0.875rem;
+        font-size: 0.95rem;
+    }
+    
+    .submit-btn {
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-content {
+        padding: 4.5rem 0.75rem 1.5rem;
+    }
+    
+    .profile-header-card {
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .avatar-wrapper {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .user-name {
+        font-size: 1.25rem;
+    }
+    
+    .user-email {
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .user-meta {
+        gap: 0.375rem;
+    }
+    
+    .meta-item {
+        font-size: 0.8rem;
+    }
+    
+    .meta-item img {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .tabs-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .tab-btn {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.85rem;
+    }
+    
+    .tab-content {
+        padding: 1.25rem;
+    }
+    
+    .section-header {
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.125rem;
+    }
+    
+    .form-group {
+        margin-top: 0;
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-label img {
+        width: 16px;
+        height: 16px;
+    }
+    
+    .form-input {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .edit-btn {
+        padding: 0.625rem 1rem;
+        font-size: 0.9rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .submit-btn {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.95rem;
+    }
+}
 </style>

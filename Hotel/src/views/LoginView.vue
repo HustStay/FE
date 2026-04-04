@@ -86,6 +86,24 @@ const handleLogin = async () => {
         if (data.role === 2) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("role", data.role);
+          localStorage.setItem("userId", data.userId);
+
+          // Fetch hotelId for this user
+          try {
+            const hotelRes = await fetch(`/api/hotel-service/hotelId?userId=${data.userId}`, {
+              headers: {
+                'Authorization': `Bearer ${data.token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            const hotelData = await hotelRes.json();
+            if (hotelData.hotelId) {
+              localStorage.setItem("hotelId", hotelData.hotelId);
+            }
+          } catch (e) {
+            console.error('Failed to fetch hotelId:', e);
+          }
+
           router.push("/home");
         } else {
           alert("Bạn không có quyền truy cập vào hệ thống!");

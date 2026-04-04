@@ -15,6 +15,9 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  define: {
+    global: 'globalThis',
+  },
   server: {
     host: '0.0.0.0', // Listen on all interfaces for Docker
     port: 5173,

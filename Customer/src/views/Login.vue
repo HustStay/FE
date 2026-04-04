@@ -162,6 +162,7 @@ const handleLogin = async () => {
             if (data.role === 1) {
               localStorage.setItem("token", data.token);
               localStorage.setItem("role", data.role);
+              localStorage.setItem("userId", data.userId);
               router.push("/home");
             } else {
               alert("Bạn không có quyền truy cập vào hệ thống!");
@@ -239,7 +240,7 @@ const handleRegister = async () => {
     position: fixed;
     left: 0;
     top: 0;
-    width: 50%;
+    width: 45%;
     height: 100vh;
     display: flex;
     align-items: center;

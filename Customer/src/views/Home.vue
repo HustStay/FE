@@ -114,7 +114,7 @@
                         </div>
                     </div>
                     <div class="hotel-rating">
-                        <span>⭐</span>
+                        <span class="rating-star">★</span>
                         {{ hotel.rating }}
                     </div>
                 </div>
@@ -977,9 +977,21 @@ const goToHotelDetail = (hotelId) => {
     .hotels-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .search-card {
+        padding: 1.5rem;
+    }
+
+    .search-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 @media (max-width: 968px) {
+    .hero-section {
+        min-height: 500px;
+    }
+
     .hero-title {
         font-size: 2.5rem;
     }
@@ -988,26 +1000,148 @@ const goToHotelDetail = (hotelId) => {
         font-size: 1.2rem;
     }
 
+    .hero-content {
+        padding: 1rem;
+    }
+
+    .search-card {
+        padding: 1.25rem;
+        border-radius: 12px;
+    }
+
     .search-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .search-field {
+        padding: 0.75rem;
     }
 
     .hotels-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
     }
 
     .destinations-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+
+    .section {
+        margin: 2.5rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.75rem;
+    }
 }
 
-@media (max-width: 640px) {
-    .hotels-grid {
+@media (max-width: 768px) {
+    .hero-section {
+        min-height: 450px;
+    }
+
+    .hero-title {
+        font-size: 2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .search-grid {
         grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .search-field input {
+        font-size: 0.95rem;
+    }
+
+    .search-button {
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    .section {
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+    }
+
+    .hotel-image-wrapper {
+        height: 180px;
+    }
+
+    .hotel-info {
+        padding: 1.25rem;
+    }
+
+    .hotel-name {
+        font-size: 1.15rem;
+    }
+
+    .destination-card {
+        height: 180px;
+    }
+
+    .destination-name {
+        font-size: 1.25rem;
     }
 }
 
 @media (max-width: 640px) {
+    .hero-section {
+        min-height: 420px;
+    }
+
+    .hero-title {
+        font-size: 1.75rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+
+    .search-card {
+        padding: 1rem;
+    }
+
+    .search-field {
+        padding: 0.65rem;
+        gap: 0.5rem;
+    }
+
+    .search-field img {
+        width: 20px;
+        height: 20px;
+    }
+
+    .search-field input {
+        font-size: 0.9rem;
+    }
+
+    .search-button {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .hotels-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
     .destinations-grid {
         grid-template-columns: 1fr;
     }
@@ -1031,6 +1165,139 @@ const goToHotelDetail = (hotelId) => {
     .hotel-name {
         font-size: 1.1rem;
         min-height: 2.6rem;
+    }
+
+    .hotel-footer {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .btn-detail {
+        width: 100%;
+        text-align: center;
+    }
+
+    .badge-featured,
+    .badge-available,
+    .badge-sold-out {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .hotel-rating {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .loading-state,
+    .empty-search-state {
+        padding: 48px 16px;
+    }
+
+    .empty-search-state h3 {
+        font-size: 20px;
+    }
+
+    .empty-search-state p {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-section {
+        min-height: 380px;
+    }
+
+    .hero-title {
+        font-size: 1.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
+    .search-card {
+        padding: 0.875rem;
+        border-radius: 8px;
+    }
+
+    .search-field {
+        padding: 0.5rem;
+    }
+
+    .search-field img {
+        width: 18px;
+        height: 18px;
+    }
+
+    .search-field input {
+        font-size: 0.85rem;
+    }
+
+    .search-button {
+        padding: 0.65rem 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .section {
+        margin: 1.5rem auto;
+        padding: 0 0.75rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+    }
+
+    .hotel-image-wrapper {
+        height: 160px;
+    }
+
+    .hotel-info {
+        padding: 1rem;
+    }
+
+    .hotel-name {
+        font-size: 1rem;
+        min-height: 2.4rem;
+    }
+
+    .hotel-location {
+        font-size: 0.9rem;
+        min-height: 2rem;
+    }
+
+    .hotel-location img {
+        width: 16px;
+        height: 16px;
+    }
+
+    .btn-detail {
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .destination-card {
+        height: 160px;
+    }
+
+    .destination-name {
+        font-size: 1.1rem;
+    }
+
+    .destination-overlay {
+        padding: 1rem;
+    }
+
+    .pagination-btn {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    .pagination-number {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
     }
 }
 </style>

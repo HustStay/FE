@@ -737,4 +737,227 @@ onMounted(() => {
 .star.filled {
   color: #f59e0b;
 }
+
+/* ==================== RESPONSIVE STYLES ==================== */
+
+/* Tablet Landscape (1024px) */
+@media (max-width: 1024px) {
+  .dashboard-main {
+    padding: 24px 16px;
+  }
+  
+  .content-card {
+    padding: 20px;
+  }
+}
+
+/* Tablet Portrait (768px) */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+  }
+  
+  .logo-section {
+    justify-content: center;
+  }
+  
+  .logo-section h1 {
+    font-size: 18px;
+  }
+  
+  .tab-navigation {
+    flex-direction: column;
+  }
+  
+  .tab-btn {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  /* Table responsive - horizontal scroll */
+  .table-container {
+    margin: 0 -20px;
+    padding: 0 20px;
+  }
+  
+  .users-table {
+    min-width: 600px;
+  }
+  
+  /* Review cards */
+  .review-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .review-actions {
+    width: 100%;
+  }
+  
+  .btn-remove,
+  .btn-keep {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* Mobile (640px) */
+@media (max-width: 640px) {
+  .dashboard-header {
+    padding: 12px 16px;
+  }
+  
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .logo-section h1 {
+    font-size: 16px;
+  }
+  
+  .logout-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+  
+  .dashboard-main {
+    padding: 16px 12px;
+  }
+  
+  .tab-navigation {
+    padding: 6px;
+    border-radius: 10px;
+  }
+  
+  .tab-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  .tab-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .content-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  /* Table to Cards layout */
+  .users-table {
+    min-width: unset;
+  }
+  
+  .users-table thead {
+    display: none;
+  }
+  
+  .users-table tbody tr {
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: #f9fafb;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .users-table td {
+    padding: 8px 0;
+    border-bottom: none;
+  }
+  
+  .users-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    font-size: 11px;
+    color: #6b7280;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 4px;
+  }
+  
+  .user-cell .user-info {
+    flex-direction: column;
+  }
+  
+  .actions-cell {
+    text-align: left;
+    padding-top: 12px;
+    border-top: 1px solid #e5e7eb;
+    margin-top: 8px;
+  }
+  
+  .dropdown-menu {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) !important;
+    right: auto;
+    width: calc(100% - 32px);
+    max-width: 300px;
+  }
+  
+  /* Review cards mobile */
+  .review-card {
+    padding: 16px;
+  }
+  
+  .review-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .reported-badge {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+  
+  .review-comment {
+    font-size: 14px;
+  }
+  
+  .loading-state,
+  .error-state,
+  .empty-state {
+    padding: 40px 16px;
+  }
+}
+
+/* Small Mobile (480px) */
+@media (max-width: 480px) {
+  .logo-section h1 {
+    font-size: 14px;
+  }
+  
+  .logout-btn span {
+    display: none;
+  }
+  
+  .logout-btn {
+    padding: 10px;
+  }
+  
+  .tab-btn span:not(:first-child) {
+    font-size: 12px;
+  }
+  
+  .role-badge,
+  .status-badge {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  
+  .btn-remove,
+  .btn-keep {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
 </style>

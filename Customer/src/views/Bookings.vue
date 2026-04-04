@@ -223,31 +223,70 @@ const mockBookings = [
 
 // Fetch bookings from API
 const fetchBookings = async () => {
+  loading.value = true
   try {
     const token = localStorage.getItem('token')
+    const userId = localStorage.getItem('userId')
+    console.log('🔍 Fetching bookings from API...')
+    console.log('Token exists:', !!token)
+    console.log('👤 UserId:', userId)
+
+    if (!token) {
+      console.error('❌ No token found! Redirecting to login...')
+      router.push('/')
+      return
+    }
+
+    if (!userId) {
+      console.warn('⚠️ No userId found! This might cause issues.')
+    }
+
     const response = await fetch('/api/booking-service/bookings', {
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${token}`,
+        'X-Auth-UserId': userId || '',
+        'Content-Type': 'application/json'
       }
     })
-    
+
+    console.log('📡 Bookings API Response:', response.status, response.statusText)
+    console.log('🔗 Request URL:', response.url)
+
     if (response.ok) {
       const data = await response.json()
+      console.log('✅ Raw API data:', data)
+
       // Map API response to UI format
-      bookings.value = data.bookings.map(booking => ({
-        id: booking.id,
-        hotelId: booking.id, // Use booking ID as hotelId if not provided
-        hotelName: booking.hotelName,
-        location: booking.address,
-        hotelImage: booking.imageUrl,
-        checkInDate: booking.checkInDate,
-        checkOutDate: booking.checkOutDate,
-        guests: booking.guests,
-        status: booking.status
-      }))
+      if (data.bookings && Array.isArray(data.bookings)) {
+        bookings.value = data.bookings.map(booking => {
+          console.log('📝 Mapping booking:', booking)
+          return {
+            id: booking.id,
+            hotelId: booking.hotelId || booking.id,
+            hotelName: booking.hotelName || 'Chưa có tên',
+            location: booking.address || 'Chưa có địa chỉ',
+            hotelImage: booking.imageUrl || 'https://via.placeholder.com/500x300',
+            checkInDate: booking.checkInDate,
+            checkOutDate: booking.checkOutDate,
+            guests: booking.guests,
+            status: booking.status
+          }
+        })
+        console.log('Mapped bookings:', bookings.value)
+      } else {
+        console.log('⚠️ No bookings array in response, using mock data')
+        bookings.value = mockBookings
+      }
+    } else {
+      const errorText = await response.text()
+      console.error('❌ API Error:', errorText)
+      console.log('📋 Falling back to mock data')
+      bookings.value = mockBookings
     }
   } catch (error) {
-    console.error('Error fetching bookings:', error)
+    console.error('❌ Error fetching bookings:', error)
+    console.log('📋 Falling back to mock data')
+    bookings.value = mockBookings
   } finally {
     loading.value = false
   }
@@ -255,26 +294,30 @@ const fetchBookings = async () => {
 
 // Filter bookings based on active tab
 const filteredBookings = computed(() => {
-  const now = new Date()
-  
-  return bookings.value.filter(booking => {
-    const checkInDate = new Date(booking.checkInDate)
-    
+  console.log('🔄 Filtering bookings. Active tab:', activeTab.value)
+  console.log('📋 All bookings:', bookings.value)
+
+  const filtered = bookings.value.filter(booking => {
     if (activeTab.value === 'upcoming') {
-      return booking.status === 'CONFIRMED'
+      return booking.status === 'CONFIRMED' || booking.status === 'PENDING'
     } else if (activeTab.value === 'completed') {
-      return booking.status === 'COMPLETED'
+      return booking.status === 'COMPLETED' || booking.status === 'CHECKED_IN'
     } else if (activeTab.value === 'cancelled') {
       return booking.status === 'CANCELLED'
     }
-    
+
     return false
   })
+
+  console.log('Filtered bookings:', filtered)
+  return filtered
 })
 
 const getStatusClass = (status) => {
   const statusMap = {
+    'PENDING': 'status-upcoming',
     'CONFIRMED': 'status-upcoming',
+    'CHECKED_IN': 'status-completed',
     'COMPLETED': 'status-completed',
     'CANCELLED': 'status-cancelled'
   }
@@ -283,11 +326,13 @@ const getStatusClass = (status) => {
 
 const getStatusText = (status) => {
   const statusMap = {
+    'PENDING': 'Chờ xác nhận',
     'CONFIRMED': 'Sắp đến',
+    'CHECKED_IN': 'Đã nhận phòng',
     'COMPLETED': 'Đã hoàn thành',
     'CANCELLED': 'Đã hủy'
   }
-  return statusMap[status] || 'Sắp đến'
+  return statusMap[status] || 'Chờ xác nhận'
 }
 
 const formatDate = (dateString) => {
@@ -325,10 +370,13 @@ const cancelBooking = async (booking) => {
 
   try {
     const token = localStorage.getItem('token')
+    const userId = localStorage.getItem('userId')
+
     const response = await fetch('/api/booking-service/bookings/status', {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
+        'X-Auth-UserId': userId,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({

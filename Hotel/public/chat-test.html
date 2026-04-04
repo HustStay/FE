@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Test - Hotel</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.6.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7.0.0/bundles/stomp.umd.lib.js"></script>
+</head>
+<body>
+    <h1>Hotel Chat Test</h1>
+    <div id="status">Status: Disconnected</div>
+    <br>
+    <button onclick="connectWebSocket()">Connect WebSocket</button>
+    <button onclick="testSendMessage()">Send Test Message</button>
+    <br><br>
+    <input type="number" id="conversationId" placeholder="Conversation ID" value="1">
+    <input type="text" id="messageContent" placeholder="Message content" value="Test message from hotel">
+    <br><br>
+    <div id="logs" style="background: #f0f0f0; padding: 10px; height: 300px; overflow-y: auto;"></div>
+
+    <script>
+        let stompClient = null;
+        let isConnected = false;
+
+        function log(message) {
+            const logsDiv = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logsDiv.innerHTML += `${timestamp}: ${message}<br>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            console.log(`${timestamp}: ${message}`);
+        }
+
+        function updateStatus(status) {
+            document.getElementById('status').textContent = `Status: ${status}`;
+            log(`Status changed to: ${status}`);
+        }
+
+        function connectWebSocket() {
+            // Get JWT token for authentication
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+
+            if (!token || !userId) {
+                log('❌ No JWT token or userId found in localStorage');
+                alert('Please login first and make sure userId is stored in localStorage');
+                return;
+            }
+
+            log(`🔑 Found token: ${token.substring(0, 20)}...`);
+            log(`👤 Found userId: ${userId}`);
+
+            if (stompClient && stompClient.connected) {
+                log('✅ WebSocket already connected');
+                return;
+            }
+
+            // Connect through API Gateway with JWT token as query parameter
+            const websocketUrl = `http://localhost:1111/chat-service/ws?token=${token}`;
+            log(`🌐 Connecting to: ${websocketUrl}`);
+
+            const socket = new SockJS(websocketUrl);
+            stompClient = Stomp.over(socket);
+
+            // Enable STOMP debugging
+            stompClient.debug = (str) => {
+                log(`🔵 STOMP Debug: ${str}`);
+            };
+
+            // Connect with JWT token in STOMP headers as well
+            const connectHeaders = {
+                'Authorization': `Bearer ${token}`
+            };
+
+            log('🤝 Attempting STOMP connection...');
+
+            stompClient.connect(connectHeaders, () => {
+                isConnected = true;
+                updateStatus('Connected');
+                log('🟢 WebSocket connected successfully!');
+
+                // Subscribe to a test topic
+                const testTopic = '/topic/chat/1'; // Test conversation ID 1
+                stompClient.subscribe(testTopic, (message) => {
+                    log(`📨 Received message on ${testTopic}: ${message.body}`);
+                    const receivedMessage = JSON.parse(message.body);
+                    log(`📨 Parsed message: ${JSON.stringify(receivedMessage)}`);
+                }, (error) => {
+                    log(`❌ Subscription error: ${error}`);
+                });
+
+                log(`🔔 Subscribed to topic: ${testTopic}`);
+
+            }, (error) => {
+                isConnected = false;
+                updateStatus('Connection Error');
+                log(`❌ Connection error: ${error}`);
+            });
+        }
+
+        function testSendMessage() {
+            if (!stompClient || !stompClient.connected) {
+                log('❌ WebSocket not connected! Please connect first.');
+                return;
+            }
+
+            const conversationId = document.getElementById('conversationId').value;
+            const messageContent = document.getElementById('messageContent').value;
+            const userId = localStorage.getItem('userId');
+
+            if (!conversationId || !messageContent || !userId) {
+                log('❌ Missing required data: conversationId, messageContent, or userId');
+                return;
+            }
+
+            const messageData = {
+                conversationId: parseInt(conversationId),
+                senderId: parseInt(userId),
+                senderType: 1, // 1 = hotel staff
+                content: messageContent,
+                messageType: 'TEXT'
+            };
+
+            const headers = {
+                'X-Auth-UserId': userId
+            };
+
+            log(`Sending message with data: ${JSON.stringify(messageData)}`);
+            log(`Sending message with headers: ${JSON.stringify(headers)}`);
+
+            try {
+                stompClient.send('/app/chat/message', headers, JSON.stringify(messageData));
+                log('✅ Message sent successfully!');
+            } catch (error) {
+                log(`❌ Message send error: ${error}`);
+            }
+        }
+
+        // Auto-connect on page load if token exists
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('userId');
+
+            log('🏨 Hotel Chat Test Page Loaded');
+            log(`🔑 Token available: ${token ? 'Yes' : 'No'}`);
+            log(`👤 UserId available: ${userId ? 'Yes' : 'No'}`);
+
+            if (token && userId) {
+                log('🔄 Auto-connecting...');
+                setTimeout(connectWebSocket, 1000);
+            } else {
+                log('⚠️ Missing authentication data. Please login first.');
+            }
+        };
+    </script>
+</body>
+</html>

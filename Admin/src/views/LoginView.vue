@@ -338,13 +338,120 @@ const togglePassword = () => {
   text-decoration: underline;
 }
 
-@media (max-width: 480px) {
-  .login-card {
-    padding: 24px;
+@media (max-width: 768px) {
+  .login-container {
+    padding: 16px;
+  }
+  
+  .logo-icon {
+    width: 56px;
+    height: 56px;
   }
   
   .title {
-    font-size: 26px;
+    font-size: 28px;
+  }
+  
+  .subtitle {
+    font-size: 15px;
+  }
+  
+  .login-card {
+    padding: 32px 24px;
+  }
+  
+  .card-title {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-header {
+    margin-bottom: 24px;
+  }
+  
+  .logo-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+  }
+  
+  .logo-icon svg {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .title {
+    font-size: 24px;
+  }
+  
+  .subtitle {
+    font-size: 14px;
+  }
+  
+  .login-card {
+    padding: 28px 20px;
+    border-radius: 14px;
+  }
+  
+  .card-title {
+    font-size: 20px;
+  }
+  
+  .card-subtitle {
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+  
+  .login-form {
+    gap: 16px;
+  }
+  
+  .input-wrapper input {
+    padding: 12px 12px 12px 42px;
+    font-size: 14px;
+  }
+  
+  .login-btn {
+    padding: 12px;
+    font-size: 15px;
+  }
+  
+  .login-footer {
+    margin-top: 20px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: 12px;
+  }
+  
+  .login-card {
+    padding: 24px 16px;
+  }
+  
+  .title {
+    font-size: 22px;
+  }
+  
+  .card-subtitle {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    font-size: 13px;
+  }
+  
+  .input-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .toggle-password svg {
+    width: 18px;
+    height: 18px;
   }
 }
 </style>

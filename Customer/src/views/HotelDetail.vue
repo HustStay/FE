@@ -32,7 +32,8 @@
                   <img width="20" height="20" src="https://img.icons8.com/windows/32/marker.png"
                                     alt="marker" />
                    {{hotel.street}}, {{hotel.district}}, {{hotel.city}}, {{hotel.country}}</span>
-                <span class="hotel-rating">⭐ {{hotel.rating}}</span>
+                <span class="hotel-rating">
+                  <span class="rating-star">★</span>{{hotel.rating}}</span>
               </div>
             </div>
           </div>
@@ -113,7 +114,7 @@
             <div class="reviews-header">
               <h3>Đánh giá từ khách hàng</h3>
               <div class="rating-summary">
-                <span class="rating-star">⭐</span>
+                <span class="rating-star">★</span>
                 <span class="rating-score">{{ overallRating }}</span>
                 <span class="rating-count">({{ reviews.length }} đánh giá)</span>
               </div>
@@ -133,7 +134,7 @@
                     @click="newComment.star = i"
                     @mouseenter="hoverStar = i"
                     @mouseleave="hoverStar = 0"
-                  >⭐</span>
+                  >★</span>
                 </div>
               </div>
               <div class="comment-input-group">
@@ -175,7 +176,6 @@
 
         <!-- Right: Booking Sidebar -->
         <aside class="right-col">
-
           <div class="booking-card">
             <div class="date-field">
               <label>Ngày nhận phòng</label>
@@ -230,13 +230,47 @@
             <label>Số khách</label>
             <input type="number" min="1" v-model.number="booking.guests" />
 
-            <button class="book-btn" @click="bookNow">Đặt phòng ngay</button>
+            <!-- 💰 NEW: Booking Summary -->
+            <div v-if="selectedRooms.length > 0 && booking.checkIn && booking.checkOut" class="booking-summary">
+              <h4>Chi tiết đặt phòng</h4>
+              <div class="summary-details">
+                <div class="summary-nights">
+                  <span class="nights-count">{{ calculateNights() }} đêm</span>
+                  <span class="nights-dates">{{ formatDisplayDate(booking.checkIn) }} - {{ formatDisplayDate(booking.checkOut) }}</span>
+                </div>
+
+                <div class="summary-rooms">
+                  <div v-for="room in selectedRooms" :key="room.id" class="summary-room">
+                    <span class="room-summary">{{ room.quantity }}x {{ room.name }}</span>
+                    <span class="room-total">{{ formatPrice(room.pricePerNight * room.quantity) }}/đêm</span>
+                  </div>
+                </div>
+
+                <div class="summary-total">
+                  <div class="total-breakdown">
+                    <span>Tổng tiền phòng ({{ calculateNights() }} đêm):</span>
+                    <span class="total-amount">{{ formatPrice(calculateTotalAmount()) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button class="book-btn" @click="bookNow" :disabled="selectedRooms.length === 0">
+              {{ selectedRooms.length === 0 ? 'Chọn phòng để đặt' : 'Đặt phòng ngay' }}
+            </button>
           </div>
 
-          <p class="note">Bạn sẽ không bị tính phí ngay bây giờ</p>
+          <p class="note"> Thanh toán an toàn qua Stripe</p>
         </aside>
       </div>
     </div>
+
+    <!-- Chat Widget -->
+    <ChatWidget
+      v-if="hotel.hotelName"
+      :hotelId="parseInt(hotelId)"
+      :hotelName="hotel.hotelName"
+    />
   </div>
 </template>
 
@@ -244,6 +278,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
+import ChatWidget from '@/components/ChatWidget.vue'
 
 const router = useRouter()
 const hotelId = router.currentRoute.value.params.id
@@ -577,6 +612,17 @@ const bookNow = async () => {
   try {
     const token = localStorage.getItem('token')
 
+    // Calculate total amount
+    const totalAmount = selectedRooms.value.reduce((sum, room) => {
+      return sum + (room.pricePerNight * room.quantity)
+    }, 0)
+
+    // Calculate number of nights
+    const checkInDate = new Date(booking.value.checkIn)
+    const checkOutDate = new Date(booking.value.checkOut)
+    const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24))
+    const finalAmount = totalAmount * nights
+
     // Build bookingItems array from selected rooms
     const bookingItems = selectedRooms.value.map(room => ({
       roomType: room.roomType.toUpperCase(),
@@ -594,7 +640,10 @@ const bookNow = async () => {
       bookingItems: bookingItems
     }
 
-    const response = await fetch('/api/booking-service/booking', {
+    console.log('🏨 Creating booking with data:', bookingData)
+
+    // Step 1: Create booking
+    const bookingResponse = await fetch('/api/booking-service/booking', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -603,17 +652,50 @@ const bookNow = async () => {
       body: JSON.stringify(bookingData)
     })
 
-    const result = await response.json()
-    
-    if (response.ok) {
-      alert('Đặt phòng thành công! Vui lòng chờ xác nhận.')
-      // Redirect to bookings page
-      router.push('/bookings')
+    const bookingResult = await bookingResponse.json()
+
+    if (bookingResponse.ok) {
+      console.log('✅ Booking created successfully:', bookingResult)
+
+      // Step 2: Create payment session
+      const paymentData = {
+        bookingId: bookingResult.bookingId,
+        amount: Math.round(finalAmount), // Convert to integer (VND cents)
+        description: `Thanh toán đặt phòng ${hotel.value.hotelName} - ${nights} đêm`
+      }
+
+      console.log('💳 Creating payment session with data:', paymentData)
+
+      const paymentResponse = await fetch('/api/payment-service/stripe/create-payment-session', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams(paymentData)
+      })
+
+      const paymentResult = await paymentResponse.json()
+
+      if (paymentResponse.ok && paymentResult.sessionUrl) {
+        console.log('✅ Payment session created:', paymentResult)
+
+        // Save hotel ID for potential cancel page navigation
+        sessionStorage.setItem('lastHotelId', hotelId)
+
+        // Step 3: Redirect to Stripe Checkout
+        window.location.href = paymentResult.sessionUrl
+      } else {
+        console.error('❌ Payment session creation failed:', paymentResult)
+        alert(`Đặt phòng thành công nhưng không thể tạo phiên thanh toán. Mã booking: ${bookingResult.bookingId}`)
+        router.push('/bookings')
+      }
     } else {
-      alert(`Đặt phòng thất bại: ${result.message || 'Vui lòng thử lại'}`)
+      console.error('❌ Booking creation failed:', bookingResult)
+      alert(`Đặt phòng thất bại: ${bookingResult.message || 'Vui lòng thử lại'}`)
     }
   } catch (error) {
-    console.error('Error booking:', error)
+    console.error('❌ Error in booking/payment flow:', error)
     alert('Có lỗi xảy ra khi đặt phòng. Vui lòng thử lại.')
   }
 }
@@ -657,6 +739,25 @@ const updateQuantity = (roomId, event) => {
   if (room && value >= 1 && value <= room.available) {
     room.quantity = value
   }
+}
+
+// 💰 NEW: Payment calculation helper functions
+const calculateNights = () => {
+  if (!booking.value.checkIn || !booking.value.checkOut) return 0
+  const checkInDate = new Date(booking.value.checkIn)
+  const checkOutDate = new Date(booking.value.checkOut)
+  return Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24))
+}
+
+const calculateTotalAmount = () => {
+  if (selectedRooms.value.length === 0 || !booking.value.checkIn || !booking.value.checkOut) return 0
+
+  const nights = calculateNights()
+  const roomTotal = selectedRooms.value.reduce((sum, room) => {
+    return sum + (room.pricePerNight * room.quantity)
+  }, 0)
+
+  return roomTotal * nights
 }
 </script>
 
@@ -802,6 +903,12 @@ const updateQuantity = (roomId, event) => {
   gap: 0.25rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+.hotel-rating .rating-star {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .section {
@@ -1230,6 +1337,108 @@ const updateQuantity = (roomId, event) => {
   cursor: pointer;
 }
 
+/* Booking Summary Styles */
+.booking-summary {
+  background: #f8fafb;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid #e7eef1;
+  margin: 0.75rem 0;
+}
+
+.booking-summary h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+  border-bottom: 1px solid #e7eef1;
+  padding-bottom: 0.5rem;
+}
+
+.summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.summary-nights {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.nights-count {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #22a6d6;
+}
+
+.nights-dates {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.summary-rooms {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.summary-room {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e7eef1;
+}
+
+.room-summary {
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.room-total {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.summary-total {
+  border-top: 1px solid #e7eef1;
+  padding-top: 0.75rem;
+}
+
+.total-breakdown {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-breakdown span:first-child {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.total-amount {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #22a6d6;
+}
+
+.book-btn:disabled {
+  background: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.book-btn:disabled:hover {
+  background: #e0e0e0;
+  transform: none;
+}
+
 .note {
   color: #777;
   font-size: 0.9rem;
@@ -1267,6 +1476,7 @@ const updateQuantity = (roomId, event) => {
 
 .rating-star {
   font-size: 1.5rem;
+  color: #f59e0b;
 }
 
 .rating-score {
@@ -1412,17 +1622,19 @@ const updateQuantity = (roomId, event) => {
 }
 
 .star-btn {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   cursor: pointer;
-  filter: grayscale(100%);
-  opacity: 0.3;
+  color: transparent;
   transition: all 0.2s;
+  -webkit-text-stroke: 2px #9ca3af;
+  text-stroke: 2px #9ca3af;
 }
 
 .star-btn.active,
 .star-btn.hover {
-  filter: none;
-  opacity: 1;
+  color: #f59e0b;
+  -webkit-text-stroke: 2px #f59e0b;
+  text-stroke: 2px #f59e0b;
 }
 
 .star-btn:hover {
@@ -1476,5 +1688,333 @@ const updateQuantity = (roomId, event) => {
 .submit-comment-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* ==================== RESPONSIVE STYLES ==================== */
+
+/* Tablet (1024px) */
+@media (max-width: 1024px) {
+  .hotel-container {
+    padding: 80px 1.5rem 2rem;
+  }
+  
+  .image-grid {
+    gap: 0.5rem;
+  }
+}
+
+/* Tablet Portrait (768px) */
+@media (max-width: 768px) {
+  .hotel-container {
+    padding: 70px 1rem 1.5rem;
+  }
+  
+  .image-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  
+  .main-image {
+    height: 250px;
+  }
+  
+  .sub-images {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.375rem;
+  }
+  
+  .sub-image {
+    height: 80px;
+  }
+  
+  .hotel-title {
+    font-size: 1.5rem;
+  }
+  
+  .hotel-location {
+    font-size: 0.9rem;
+  }
+  
+  .info-card {
+    padding: 1.25rem;
+  }
+  
+  .amenity-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .booking-card {
+    padding: 1.25rem;
+  }
+  
+  .room-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .reviews-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .comment-form {
+    padding: 1.25rem;
+  }
+  
+  .star-rating-input {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .comment-textarea {
+    width: 100%;
+  }
+}
+
+/* Mobile (640px) */
+@media (max-width: 640px) {
+  .hotel-container {
+    padding: 65px 0.75rem 1rem;
+  }
+  
+  .main-image {
+    height: 200px;
+    border-radius: 10px;
+  }
+  
+  .sub-images {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .sub-image {
+    height: 70px;
+    border-radius: 6px;
+  }
+  
+  .more-overlay {
+    font-size: 0.9rem;
+    border-radius: 6px;
+  }
+  
+  .hotel-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .hotel-title {
+    font-size: 1.25rem;
+  }
+  
+  .hotel-location {
+    font-size: 0.85rem;
+  }
+  
+  .info-card {
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+  }
+  
+  .info-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .amenity-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  
+  .amenity-item {
+    padding: 0.625rem;
+    font-size: 0.85rem;
+  }
+  
+  .amenity-item img {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .room-card {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+  
+  .room-name {
+    font-size: 1rem;
+  }
+  
+  .room-price {
+    font-size: 1.25rem;
+  }
+  
+  .booking-card {
+    padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+  }
+  
+  .booking-card h3 {
+    font-size: 1.1rem;
+  }
+  
+  .date-inputs {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .date-input {
+    padding: 0.75rem;
+  }
+  
+  .guest-selector {
+    padding: 0.75rem;
+  }
+  
+  .btn-book {
+    padding: 0.875rem;
+    font-size: 0.95rem;
+  }
+  
+  .price-info {
+    font-size: 1.25rem;
+  }
+  
+  .reviews-section {
+    padding: 1rem;
+  }
+  
+  .rating-star {
+    font-size: 1.25rem;
+  }
+  
+  .rating-score {
+    font-size: 1.25rem;
+  }
+  
+  .rating-count {
+    font-size: 0.85rem;
+  }
+  
+  .review-card {
+    padding: 1rem;
+  }
+  
+  .review-header {
+    gap: 0.75rem;
+  }
+  
+  .reviewer-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+  
+  .reviewer-name {
+    font-size: 0.95rem;
+  }
+  
+  .review-text {
+    font-size: 0.9rem;
+  }
+  
+  .comment-form {
+    padding: 1rem;
+  }
+  
+  .comment-form h4 {
+    font-size: 1rem;
+  }
+  
+  .star-btn {
+    font-size: 1.25rem;
+  }
+  
+  .comment-textarea {
+    min-height: 80px;
+    font-size: 0.9rem;
+  }
+  
+  .submit-comment-btn {
+    width: 100%;
+    padding: 0.75rem;
+  }
+}
+
+/* Small Mobile (480px) */
+@media (max-width: 480px) {
+  .hotel-container {
+    padding: 60px 0.5rem 0.75rem;
+  }
+  
+  .main-image {
+    height: 180px;
+  }
+  
+  .sub-images {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .sub-image {
+    height: 60px;
+  }
+  
+  .hotel-title {
+    font-size: 1.125rem;
+  }
+  
+  .info-card,
+  .booking-card,
+  .room-card,
+  .review-card,
+  .comment-form {
+    padding: 0.875rem;
+  }
+  
+  .amenity-grid {
+    gap: 0.375rem;
+  }
+  
+  .amenity-item {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    gap: 0.375rem;
+  }
+  
+  .amenity-item img {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .room-features {
+    gap: 0.375rem;
+  }
+  
+  .feature-tag {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .room-price {
+    font-size: 1.125rem;
+  }
+  
+  .btn-select {
+    padding: 0.625rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .date-input,
+  .guest-selector {
+    font-size: 0.9rem;
+  }
+  
+  .reviewer-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+  }
 }
 </style>
