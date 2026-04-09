@@ -201,7 +201,7 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
 import SockJS from 'sockjs-client'
-import { Stomp } from '@stomp/stompjs'
+import { Client } from '@stomp/stompjs'
 import cloudinaryService from '@/services/cloudinaryService.js'
 import { FILE_CONFIG, getDownloadUrl } from '@/utils/cloudinaryConfig.js'
 
@@ -225,12 +225,21 @@ const uploadProgress = ref(0)
 const fileInput = ref(null)
 
 let stompClient = null
+const DEFAULT_API_GATEWAY_URL = 'https://api-gateway-310906765270.asia-southeast1.run.app'
+const apiGatewayUrl = (import.meta.env.VITE_API_GATEWAY_URL || import.meta.env.VITE_API_URL || DEFAULT_API_GATEWAY_URL).replace(/\/+$/, '')
+// Use Vite proxy in dev; use API Gateway URL in production
+const buildChatWebSocketUrl = (token) => {
+  const encodedToken = encodeURIComponent(token)
+  if (import.meta.env.DEV) {
+    return `/chat-ws/chat-service/ws?token=${encodedToken}`
+  }
+  return `${apiGatewayUrl}/chat-service/ws?token=${encodedToken}`
+}
 
-// WebSocket Connection
+// WebSocket Connection using new STOMP Client API
 const connectWebSocket = () => {
   console.log(' Hotel connectWebSocket called')
 
-  // Get JWT token for authentication
   const token = localStorage.getItem('token')
   if (!token) {
     console.error(' No JWT token found')
@@ -239,51 +248,48 @@ const connectWebSocket = () => {
 
   console.log(' Hotel JWT token found:', token ? token.substring(0, 20) + '...' : 'null')
 
-  // Don't create multiple connections
-  if (stompClient && stompClient.connected) {
-    console.log(' Hotel WebSocket already connected')
-    return
-  }
-
+  // Deactivate existing client if any
   if (stompClient) {
-    console.log(' Hotel disposing existing non-connected stompClient')
-    stompClient.disconnect()
+    try {
+      stompClient.deactivate()
+    } catch (e) {
+      console.warn(' Error deactivating stale STOMP client:', e)
+    }
   }
 
-  // Connect through API Gateway with JWT token as query parameter
-  const websocketUrl = `http://localhost:1111/chat-service/ws?token=${token}`
-  console.log('Hotel connecting to WebSocket URL:', websocketUrl)
+  // Use new Client API (fixes "did not receive a factory" warning)
+  stompClient = new Client({
+    webSocketFactory: () => new SockJS(buildChatWebSocketUrl(token)),
+    connectHeaders: {
+      'Authorization': `Bearer ${token}`
+    },
+    reconnectDelay: 5000,
+    onConnect: () => {
+      isConnected.value = true
+      console.log('✅ Hotel WebSocket connected')
 
-  const socket = new SockJS(websocketUrl)
-  stompClient = Stomp.over(socket)
-
-  // Connect with JWT token in STOMP headers as well (for additional security)
-  const connectHeaders = {
-    'Authorization': `Bearer ${token}`
-  }
-
-  console.log(' Hotel attempting STOMP connection with headers:', connectHeaders)
-
-  stompClient.connect(connectHeaders, () => {
-    isConnected.value = true
-    console.log(' Hotel WebSocket connected with JWT authentication')
-
-    // Enable STOMP debugging AFTER connection (like Customer)
-    stompClient.debug = (str) => {
-      console.log(' Hotel STOMP Debug:', str)
+      // Subscribe to conversation topic when conversation is already selected
+      if (selectedConversation.value) {
+        console.log('Hotel auto-subscribing to conversation on connect:', selectedConversation.value.id)
+        subscribeToConversation(selectedConversation.value.id)
+      } else {
+        console.log(' Hotel connected but no conversation selected yet')
+      }
+    },
+    onStompError: (frame) => {
+      console.error('❌ Hotel STOMP error:', frame)
+      isConnected.value = false
+    },
+    onDisconnect: () => {
+      isConnected.value = false
+      console.log('🔌 Hotel WebSocket disconnected')
+    },
+    onWebSocketClose: () => {
+      isConnected.value = false
     }
-
-    // Subscribe to conversation topic when conversation is already selected
-    if (selectedConversation.value) {
-      console.log('Hotel auto-subscribing to conversation on connect:', selectedConversation.value.id)
-      subscribeToConversation(selectedConversation.value.id)
-    } else {
-      console.log(' Hotel connected but no conversation selected yet')
-    }
-  }, (error) => {
-    console.error(' Hotel WebSocket connection error:', error)
-    isConnected.value = false
   })
+
+  stompClient.activate()
 }
 
 let currentSubscription = null
@@ -292,10 +298,10 @@ let currentSubscription = null
 const subscribeToConversation = (conversationId) => {
   console.log(' Hotel subscribeToConversation called with conversationId:', conversationId)
 
-  if (!stompClient || !stompClient.connected) {
+  if (!stompClient || !stompClient.active) {
     console.error(' STOMP client not connected, current state:', {
       stompClient: !!stompClient,
-      connected: stompClient ? stompClient.connected : false
+      active: stompClient ? stompClient.active : false
     })
     return
   }
@@ -426,11 +432,11 @@ const selectConversation = async (conversation) => {
   // Subscribe to this conversation (WebSocket should already be connected)
   console.log('🔌 Hotel WebSocket connection status:', {
     stompClient: !!stompClient,
-    connected: stompClient ? stompClient.connected : false,
+    active: stompClient ? stompClient.active : false,
     isConnectedFlag: isConnected.value
   })
 
-  if (stompClient && stompClient.connected) {
+  if (stompClient && stompClient.active) {
     console.log(' Hotel WebSocket is connected, subscribing...')
     subscribeToConversation(conversation.id)
   } else {
@@ -540,6 +546,12 @@ const sendMessage = () => {
     return
   }
 
+  if (!stompClient || !stompClient.active) {
+    console.warn(' Hotel STOMP client is not connected. Reconnecting...')
+    connectWebSocket()
+    return
+  }
+
   isSending.value = true
   console.log(' Hotel sending message...')
 
@@ -571,16 +583,13 @@ const sendMessage = () => {
       messageType: 'TEXT'
     }
 
-    // Send with STOMP headers AND in body
-    const headers = {
-      'X-Auth-UserId': userId
-    }
-
     console.log(' Hotel sending message with data:', messageData)
-    console.log(' Hotel sending message with headers:', headers)
-    console.log(' Hotel STOMP client connected?', stompClient.connected)
 
-    stompClient.send('/app/chat/message', headers, JSON.stringify(messageData))
+    stompClient.publish({
+      destination: '/app/chat/message',
+      headers: { 'X-Auth-UserId': userId },
+      body: JSON.stringify(messageData)
+    })
     console.log(' Hotel message sent successfully')
 
     newMessage.value = ''
@@ -671,6 +680,12 @@ const handleFileUpload = async () => {
 const sendFileMessage = async (uploadResult) => {
   if (!selectedConversation.value) return
 
+  if (!stompClient || !stompClient.active) {
+    console.warn(' Hotel STOMP client is not connected. Reconnecting before sending file...')
+    connectWebSocket()
+    return
+  }
+
   const userId = parseInt(localStorage.getItem('userId'))
 
   const fileMessage = {
@@ -686,14 +701,13 @@ const sendFileMessage = async (uploadResult) => {
     thumbnailUrl: uploadResult.thumbnailUrl
   }
 
-  const headers = {
-    'X-Auth-UserId': userId.toString()
-  }
-
   console.log('Hotel sending file message with data:', fileMessage)
-  console.log('Hotel sending file message with headers:', headers)
 
-  stompClient.send('/app/chat/message', headers, JSON.stringify(fileMessage))
+  stompClient.publish({
+    destination: '/app/chat/message',
+    headers: { 'X-Auth-UserId': userId.toString() },
+    body: JSON.stringify(fileMessage)
+  })
 }
 
 // Utility methods for files
@@ -803,8 +817,9 @@ onUnmounted(() => {
   }
 
   // Disconnect WebSocket
-  if (stompClient && stompClient.connected) {
-    stompClient.disconnect()
+  if (stompClient) {
+    stompClient.deactivate()
+    stompClient = null
   }
 })
 </script>

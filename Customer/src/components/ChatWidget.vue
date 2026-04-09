@@ -178,7 +178,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import SockJS from 'sockjs-client'
-import { Stomp } from '@stomp/stompjs'
+import { Client } from '@stomp/stompjs'
 import cloudinaryService from '@/services/cloudinaryService.js'
 import { FILE_CONFIG, getDownloadUrl } from '@/utils/cloudinaryConfig.js'
 
@@ -205,6 +205,8 @@ const messagesContainer = ref(null)
 const messageInput = ref(null)
 
 let stompClient = null
+const DEFAULT_API_GATEWAY_URL = 'https://api-gateway-310906765270.asia-southeast1.run.app'
+const apiGatewayUrl = (import.meta.env.VITE_API_GATEWAY_URL || import.meta.env.VITE_API_URL || DEFAULT_API_GATEWAY_URL).replace(/\/+$/, '')
 
 // File upload reactive data
 const selectedFile = ref(null)
@@ -219,81 +221,99 @@ const imageModal = ref({
   url: ''
 })
 
-// WebSocket connection
+// Use Vite proxy in dev; use API Gateway URL in production
+const buildChatWebSocketUrl = (token) => {
+  const encodedToken = encodeURIComponent(token)
+  if (import.meta.env.DEV) {
+    return `/chat-ws/chat-service/ws?token=${encodedToken}`
+  }
+  return `${apiGatewayUrl}/chat-service/ws?token=${encodedToken}`
+}
+
+// Subscribe to conversation topic (extracted for reuse)
+const subscribeToTopic = () => {
+  if (!conversationId.value || !stompClient) return
+
+  stompClient.subscribe(`/topic/chat/${conversationId.value}`, (message) => {
+    const receivedMessage = JSON.parse(message.body)
+
+    // Handle read status updates
+    if (receivedMessage.type === 'READ_STATUS_UPDATE') {
+      console.log('📡 Customer received read status update:', receivedMessage)
+      if (receivedMessage.readerType === 1) { // Hotel marked customer messages as read
+        messages.value.forEach(msg => {
+          if (msg.senderType === 0) msg.isRead = true
+        })
+      }
+      return
+    }
+
+    // Handle regular chat messages
+    messages.value.push({
+      content: receivedMessage.content,
+      senderType: receivedMessage.senderType,
+      createdAt: receivedMessage.createdAt,
+      isRead: receivedMessage.isRead,
+      messageType: receivedMessage.messageType,
+      fileUrl: receivedMessage.fileUrl,
+      fileName: receivedMessage.fileName,
+      fileSize: receivedMessage.fileSize,
+      fileType: receivedMessage.fileType,
+      thumbnailUrl: receivedMessage.thumbnailUrl
+    })
+
+    nextTick(() => scrollToBottom())
+
+    if (!isOpen.value && receivedMessage.senderType === 1) {
+      unreadCount.value++
+    }
+  })
+}
+
+// WebSocket connection using new STOMP Client API (supports auto-reconnect)
 const connectWebSocket = () => {
-  // Get JWT token for authentication
   const token = localStorage.getItem('token')
   if (!token) {
     console.error('No JWT token found')
     return
   }
 
-  // Connect through API Gateway with JWT token as query parameter
-  const socket = new SockJS(`http://localhost:1111/chat-service/ws?token=${token}`)
-  stompClient = Stomp.over(socket)
-
-  // Connect with JWT token in STOMP headers as well (for additional security)
-  const connectHeaders = {
-    'Authorization': `Bearer ${token}`
+  // Deactivate existing client if any
+  if (stompClient) {
+    try {
+      stompClient.deactivate()
+    } catch (e) {
+      console.warn('Error deactivating stale STOMP client:', e)
+    }
   }
 
-  stompClient.connect(connectHeaders, () => {
-    isConnected.value = true
-    console.log('WebSocket connected with JWT authentication')
-
-    // Enable STOMP debugging
-    stompClient.debug = (str) => {
-      console.log('STOMP Debug:', str)
+  // Use new Client API (fixes "did not receive a factory" warning)
+  stompClient = new Client({
+    // Factory function - called on each (re)connect
+    webSocketFactory: () => new SockJS(buildChatWebSocketUrl(token)),
+    connectHeaders: {
+      'Authorization': `Bearer ${token}`
+    },
+    reconnectDelay: 5000, // auto-reconnect after 5s
+    onConnect: () => {
+      isConnected.value = true
+      console.log('✅ WebSocket connected')
+      subscribeToTopic()
+    },
+    onStompError: (frame) => {
+      console.error('❌ STOMP error:', frame)
+      isConnected.value = false
+    },
+    onDisconnect: () => {
+      isConnected.value = false
+      console.log('🔌 WebSocket disconnected')
+    },
+    onWebSocketClose: () => {
+      isConnected.value = false
     }
-
-    // Subscribe to conversation topic
-    if (conversationId.value) {
-      stompClient.subscribe(`/topic/chat/${conversationId.value}`, (message) => {
-        const receivedMessage = JSON.parse(message.body)
-
-        // 📡 NEW: Handle read status updates
-        if (receivedMessage.type === 'READ_STATUS_UPDATE') {
-          console.log('📡 Customer received read status update:', receivedMessage)
-
-          // Update local messages read status
-          if (receivedMessage.readerType === 1) { // Hotel marked customer messages as read
-            messages.value.forEach(msg => {
-              if (msg.senderType === 0) { // Customer messages
-                msg.isRead = true
-              }
-            })
-            console.log('📡 Customer updated read status for customer messages')
-          }
-          return // Don't add read status updates to message list
-        }
-
-        // Handle regular chat messages
-        messages.value.push({
-          content: receivedMessage.content,
-          senderType: receivedMessage.senderType,
-          createdAt: receivedMessage.createdAt,
-          isRead: receivedMessage.isRead,
-          messageType: receivedMessage.messageType,
-          fileUrl: receivedMessage.fileUrl,
-          fileName: receivedMessage.fileName,
-          fileSize: receivedMessage.fileSize,
-          fileType: receivedMessage.fileType,
-          thumbnailUrl: receivedMessage.thumbnailUrl
-        })
-
-        // Scroll to bottom
-        nextTick(() => scrollToBottom())
-
-        // Update unread count if chat is minimized
-        if (!isOpen.value && receivedMessage.senderType === 1) {
-          unreadCount.value++
-        }
-      })
-    }
-  }, (error) => {
-    console.error('WebSocket connection error:', error)
-    isConnected.value = false
   })
+
+  stompClient.activate()
 }
 
 // Initialize chat
@@ -399,7 +419,13 @@ const sendMessage = () => {
   }
 
   // Handle text message
-  if (!newMessage.value.trim() || isSending.value || !stompClient) return
+  if (!newMessage.value.trim() || isSending.value || !stompClient || !conversationId.value) return
+
+  if (!stompClient || !stompClient.active) {
+    console.warn('STOMP client is not connected. Reconnecting...')
+    connectWebSocket()
+    return
+  }
 
   isSending.value = true
 
@@ -422,7 +448,11 @@ const sendMessage = () => {
     console.log('Sending message with data:', messageData)
     console.log('Sending message with headers:', headers)
 
-    stompClient.send('/app/chat/message', headers, JSON.stringify(messageData))
+    stompClient.publish({
+      destination: '/app/chat/message',
+      headers: { 'X-Auth-UserId': userId },
+      body: JSON.stringify(messageData)
+    })
 
     newMessage.value = ''
     nextTick(() => {
@@ -463,7 +493,8 @@ const minimizeChat = () => {
 const closeChat = () => {
   isOpen.value = false
   if (stompClient) {
-    stompClient.disconnect()
+    stompClient.deactivate()
+    stompClient = null
   }
 }
 
@@ -582,7 +613,12 @@ const handleFileUpload = async () => {
 const sendFileMessage = async (uploadResult) => {
   if (!conversationId.value) return
 
-  const token = localStorage.getItem('token')
+  if (!stompClient || !stompClient.active) {
+    console.warn('STOMP client is not connected. Reconnecting before sending file...')
+    connectWebSocket()
+    return
+  }
+
   const userId = parseInt(localStorage.getItem('userId'))
 
   const fileMessage = {
@@ -605,7 +641,11 @@ const sendFileMessage = async (uploadResult) => {
   console.log('Sending file message with data:', fileMessage)
   console.log('Sending file message with headers:', headers)
 
-  stompClient.send('/app/chat/message', headers, JSON.stringify(fileMessage))
+  stompClient.publish({
+    destination: '/app/chat/message',
+    headers: { 'X-Auth-UserId': userId.toString() },
+    body: JSON.stringify(fileMessage)
+  })
 }
 
 // Utility methods for files
@@ -640,7 +680,8 @@ const closeImageModal = () => {
 
 onUnmounted(() => {
   if (stompClient) {
-    stompClient.disconnect()
+    stompClient.deactivate()
+    stompClient = null
   }
 })
 </script>

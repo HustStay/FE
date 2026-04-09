@@ -56,7 +56,7 @@
             }
 
             // Connect through API Gateway with JWT token as query parameter
-            const websocketUrl = `http://localhost:1111/chat-service/ws?token=${token}`;
+            const websocketUrl = `https://api-gateway-310906765270.asia-southeast1.run.app/chat-service/ws?token=${token}`;
             log(`🌐 Connecting to: ${websocketUrl}`);
 
             const socket = new SockJS(websocketUrl);
