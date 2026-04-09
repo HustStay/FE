@@ -1,0 +1,52 @@
+version: '3.9'
+
+services:
+
+  # ─────────────────────────────
+  # Admin Frontend (port 5171)
+  # ─────────────────────────────
+  admin:
+    build:
+      context: ./Admin
+      dockerfile: Dockerfile
+    image: datn-fe-admin:latest
+    container_name: fe-admin
+    ports:
+      - "5171:80"
+    restart: unless-stopped
+    networks:
+      - fe-network
+
+  # ─────────────────────────────
+  # Customer Frontend (port 5172)
+  # ─────────────────────────────
+  customer:
+    build:
+      context: ./Customer
+      dockerfile: Dockerfile
+    image: datn-fe-customer:latest
+    container_name: fe-customer
+    ports:
+      - "5172:80"
+    restart: unless-stopped
+    networks:
+      - fe-network
+
+  # ─────────────────────────────
+  # Hotel Frontend (port 5173)
+  # ─────────────────────────────
+  hotel:
+    build:
+      context: ./Hotel
+      dockerfile: Dockerfile
+    image: datn-fe-hotel:latest
+    container_name: fe-hotel
+    ports:
+      - "5173:80"
+    restart: unless-stopped
+    networks:
+      - fe-network
+
+networks:
+  fe-network:
+    driver: bridge
