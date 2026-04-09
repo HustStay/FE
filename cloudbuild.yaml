@@ -1,24 +1,87 @@
 steps:
-  - name: 'node:20'
-    dir: 'Customer'
-    entrypoint: 'bash'
+  # ========== CUSTOMER ==========
+  - name: 'gcr.io/cloud-builders/docker'
     args:
-      - -c
-      - npm ci && npm run build
+      - build
+      - -t
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/customer:$COMMIT_SHA
+      - -t
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/customer:latest
+      - ./Customer
 
-  - name: 'node:20'
-    dir: 'Hotel'
-    entrypoint: 'bash'
+  - name: 'gcr.io/cloud-builders/docker'
     args:
-      - -c
-      - npm ci && npm run build
+      - push
+      - --all-tags
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/customer
 
-  - name: 'node:20'
-    dir: 'Admin'
-    entrypoint: 'bash'
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
     args:
-      - -c
-      - npm ci && npm run build
+      - run
+      - deploy
+      - customer-fe
+      - --image=asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/customer:$COMMIT_SHA
+      - --region=asia-southeast1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=80
+
+  # ========== HOTEL ==========
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/hotel:$COMMIT_SHA
+      - -t
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/hotel:latest
+      - ./Hotel
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - --all-tags
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/hotel
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - hotel-fe
+      - --image=asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/hotel:$COMMIT_SHA
+      - --region=asia-southeast1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=80
+
+  # ========== ADMIN ==========
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - build
+      - -t
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/admin:$COMMIT_SHA
+      - -t
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/admin:latest
+      - ./Admin
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - push
+      - --all-tags
+      - asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/admin
+
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - admin-fe
+      - --image=asia-southeast1-docker.pkg.dev/$PROJECT_ID/frontend/admin:$COMMIT_SHA
+      - --region=asia-southeast1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=80
 
 options:
   logging: CLOUD_LOGGING_ONLY
