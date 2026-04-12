@@ -7,6 +7,7 @@ import HotelDetail from '@/views/HotelDetail.vue'
 import Bookings from '@/views/Bookings.vue'
 import PaymentSuccess from '@/views/PaymentSuccess.vue'
 import PaymentCancel from '@/views/PaymentCancel.vue'
+import PaymentCheckout from '@/views/PaymentCheckout.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,6 +51,11 @@ const router = createRouter({
       path: '/payment/cancel',
       name: 'payment-cancel',
       component: PaymentCancel
+    },
+    {
+      path: '/payment/checkout',
+      name: 'payment-checkout',
+      component: PaymentCheckout
     }
   ],
 })

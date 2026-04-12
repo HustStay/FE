@@ -63,6 +63,7 @@ const goHome = () => {
 }
 
 onMounted(() => {
+  sessionStorage.removeItem('pendingPayment')
   const orderCode = route.query.orderCode
   const token = localStorage.getItem('token')
 
