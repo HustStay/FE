@@ -260,7 +260,7 @@
             </button>
           </div>
 
-          <p class="note">🔒 Thanh toán an toàn qua PayOS</p>
+          <p class="note"> Thanh toán an toàn qua PayOS</p>
         </aside>
       </div>
     </div>
@@ -692,7 +692,7 @@ const bookNow = async () => {
         body: JSON.stringify(paymentData)
       })
 
-      const paymentResult = await paymentResponse.json()
+      const paymentResult = await paymentResponse.json().catch(() => ({}))
 
       if (paymentResponse.ok && paymentResult.sessionUrl) {
         console.log('✅ Payment session created:', paymentResult)
@@ -713,7 +713,8 @@ const bookNow = async () => {
         })
       } else {
         console.error('❌ Payment session creation failed:', paymentResult)
-        alert(`Đặt phòng thành công nhưng không thể tạo phiên thanh toán. Mã booking: ${createdBookingId}`)
+        const backendMessage = paymentResult?.message ? `\nChi tiết: ${paymentResult.message}` : ''
+        alert(`Đặt phòng thành công nhưng không thể tạo phiên thanh toán. Mã booking: ${createdBookingId}${backendMessage}`)
         router.push('/bookings')
       }
     } else {
