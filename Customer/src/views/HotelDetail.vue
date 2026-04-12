@@ -260,7 +260,7 @@
             </button>
           </div>
 
-          <p class="note"> Thanh toán an toàn qua Stripe</p>
+          <p class="note">🔒 Thanh toán an toàn qua PayOS</p>
         </aside>
       </div>
     </div>
@@ -657,22 +657,27 @@ const bookNow = async () => {
     if (bookingResponse.ok) {
       console.log('✅ Booking created successfully:', bookingResult)
 
-      // Step 2: Create payment session
+      // Step 2: Create PayOS payment link
       const paymentData = {
         bookingId: bookingResult.bookingId,
-        amount: Math.round(finalAmount), // Convert to integer (VND cents)
-        description: `Thanh toán đặt phòng ${hotel.value.hotelName} - ${nights} đêm`
+        amount: Math.round(finalAmount),
+        description: `Thanh toán đặt phòng ${hotel.value.hotelName} - ${nights} đêm`,
+        customerName: localStorage.getItem('fullName') || 'Khách hàng',
+        customerEmail: localStorage.getItem('email') || '',
+        hotelName: hotel.value.hotelName,
+        checkInDate: booking.value.checkIn,
+        checkOutDate: booking.value.checkOut
       }
 
-      console.log('💳 Creating payment session with data:', paymentData)
+      console.log('💳 Creating PayOS payment link with data:', paymentData)
 
-      const paymentResponse = await fetch('/api/payment-service/stripe/create-payment-session', {
+      const paymentResponse = await fetch('/api/payment-service/payos/create-payment-link', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/json'
         },
-        body: new URLSearchParams(paymentData)
+        body: JSON.stringify(paymentData)
       })
 
       const paymentResult = await paymentResponse.json()
@@ -683,7 +688,7 @@ const bookNow = async () => {
         // Save hotel ID for potential cancel page navigation
         sessionStorage.setItem('lastHotelId', hotelId)
 
-        // Step 3: Redirect to Stripe Checkout
+        // Step 3: Redirect to PayOS checkout page
         window.location.href = paymentResult.sessionUrl
       } else {
         console.error('❌ Payment session creation failed:', paymentResult)
