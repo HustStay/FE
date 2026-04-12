@@ -63,7 +63,21 @@ const goHome = () => {
 }
 
 onMounted(() => {
-  console.log('💳 Payment cancelled - User redirected from Stripe checkout')
+  const orderCode = route.query.orderCode
+  const token = localStorage.getItem('token')
+
+  if (orderCode) {
+    fetch(`/api/payment-service/payos/cancel/${orderCode}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    }).catch((error) => {
+      console.error('❌ Failed to notify cancellation to payment service:', error)
+    })
+  }
+
+  console.log('💳 Payment cancelled - User redirected from PayOS checkout')
 })
 </script>
 

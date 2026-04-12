@@ -105,21 +105,25 @@ const goHome = () => {
 
 const verifyPayment = async () => {
   try {
-    // Get session_id from URL query params
-    const sessionId = route.query.session_id
+    // PayOS trả về orderCode trong URL query params
+    const orderCode = route.query.orderCode
+    const status = String(route.query.status || '').toUpperCase()
+    const code = String(route.query.code || '').toUpperCase()
 
-    if (!sessionId) {
+    if (!orderCode) {
       paymentStatus.value = 'error'
       errorMessage.value = 'Không tìm thấy thông tin phiên thanh toán'
       return
     }
 
-    console.log('🔍 Verifying payment for session:', sessionId)
+    console.log('🔍 Verifying PayOS payment for orderCode:', orderCode, 'status:', status, 'code:', code)
 
     const token = localStorage.getItem('token')
+    const query = new URLSearchParams({ orderCode: String(orderCode) })
+    if (status) query.set('status', status)
 
-    // Get session details from payment service
-    const response = await fetch(`/api/payment-service/stripe/session/${sessionId}`, {
+    // Gọi endpoint success để BE xác nhận booking ngay khi PayOS redirect về
+    const response = await fetch(`/api/payment-service/payos/success?${query.toString()}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -128,26 +132,35 @@ const verifyPayment = async () => {
     console.log('📡 API Response status:', response.status, response.statusText)
 
     if (response.ok) {
-      const sessionData = await response.json()
-      console.log('✅ Session data received:', sessionData)
-      console.log('💳 Payment status from API:', sessionData.paymentStatus)
+      const paymentData = await response.json()
+      console.log('✅ Payment data received:', paymentData)
 
-      if (sessionData.paymentStatus === 'paid') {
-        // Payment successful
+      const paymentStatusFromApi = String(paymentData.status || '').toUpperCase()
+      const isPaid = paymentStatusFromApi === 'PAID' || status === 'PAID' || code === '00'
+
+      if (isPaid) {
         paymentStatus.value = 'success'
         bookingInfo.value = {
-          bookingId: sessionData.metadata?.bookingId || sessionData.sessionId || 'N/A',
-          amount: sessionData.amountTotal || 0
+          bookingId: paymentData.bookingId || orderCode,
+          amount: paymentData.amount || 0
         }
       } else {
         paymentStatus.value = 'error'
-        errorMessage.value = `Thanh toán chưa hoàn tất. Status: ${sessionData.paymentStatus || 'unknown'}`
+        errorMessage.value = `Thanh toán chưa hoàn tất. Trạng thái: ${paymentData.status || 'unknown'}`
       }
     } else {
       const errorData = await response.text()
-      console.error('❌ Failed to verify payment session. Response:', errorData)
-      paymentStatus.value = 'error'
-      errorMessage.value = 'Không thể xác minh trạng thái thanh toán'
+      console.error('❌ Failed to verify payment. Response:', errorData)
+      if (status === 'PAID' || code === '00') {
+        paymentStatus.value = 'success'
+        bookingInfo.value = {
+          bookingId: orderCode,
+          amount: 0
+        }
+      } else {
+        paymentStatus.value = 'error'
+        errorMessage.value = 'Không thể xác minh trạng thái thanh toán'
+      }
     }
   } catch (error) {
     console.error('❌ Error verifying payment:', error)
