@@ -176,7 +176,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, onUnmounted, nextTick } from 'vue'
 import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
 import cloudinaryService from '@/services/cloudinaryService.js'
