@@ -170,6 +170,7 @@ const verifyPayment = async () => {
 }
 
 onMounted(() => {
+  sessionStorage.removeItem('pendingPayment')
   verifyPayment()
 })
 </script>

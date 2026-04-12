@@ -653,13 +653,25 @@ const bookNow = async () => {
     })
 
     const bookingResult = await bookingResponse.json()
+    const createdBookingId =
+      bookingResult?.bookingId ??
+      bookingResult?.id ??
+      bookingResult?.data?.bookingId ??
+      bookingResult?.data?.id
 
     if (bookingResponse.ok) {
       console.log('✅ Booking created successfully:', bookingResult)
 
+      if (!createdBookingId) {
+        console.error('❌ Booking created but bookingId is missing:', bookingResult)
+        alert('Đặt phòng thành công nhưng không nhận được mã booking từ hệ thống.')
+        router.push('/bookings')
+        return
+      }
+
       // Step 2: Create PayOS payment link
       const paymentData = {
-        bookingId: bookingResult.bookingId,
+        bookingId: createdBookingId,
         amount: Math.round(finalAmount),
         description: `Thanh toán đặt phòng ${hotel.value.hotelName} - ${nights} đêm`,
         customerName: localStorage.getItem('fullName') || 'Khách hàng',
@@ -687,12 +699,21 @@ const bookNow = async () => {
 
         // Save hotel ID for potential cancel page navigation
         sessionStorage.setItem('lastHotelId', hotelId)
+        sessionStorage.setItem('pendingPayment', JSON.stringify({
+          bookingId: createdBookingId,
+          amount: paymentResult.amount ?? Math.round(finalAmount),
+          orderCode: paymentResult.sessionId,
+          checkoutUrl: paymentResult.sessionUrl
+        }))
 
-        // Step 3: Redirect to PayOS checkout page
-        window.location.href = paymentResult.sessionUrl
+        // Step 3: Open internal checkout page to render QR from PayOS checkout URL
+        router.push({
+          path: '/payment/checkout',
+          query: { orderCode: paymentResult.sessionId }
+        })
       } else {
         console.error('❌ Payment session creation failed:', paymentResult)
-        alert(`Đặt phòng thành công nhưng không thể tạo phiên thanh toán. Mã booking: ${bookingResult.bookingId}`)
+        alert(`Đặt phòng thành công nhưng không thể tạo phiên thanh toán. Mã booking: ${createdBookingId}`)
         router.push('/bookings')
       }
     } else {
