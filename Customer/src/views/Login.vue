@@ -120,11 +120,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 const router = useRouter()
+const route = useRoute()
 const activeTab = ref('login')
+
+const resolveTab = (tab) => (tab === 'register' ? 'register' : 'login')
+
+watch(
+    () => route.query.tab,
+    (tab) => {
+        activeTab.value = resolveTab(tab)
+    },
+    { immediate: true }
+)
 
 const loginForm = ref({
     username: '',
