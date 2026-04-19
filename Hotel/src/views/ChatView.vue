@@ -200,7 +200,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
-import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
 import cloudinaryService from '@/services/cloudinaryService.js'
 import { FILE_CONFIG, getDownloadUrl } from '@/utils/cloudinaryConfig.js'
@@ -231,9 +230,11 @@ const apiGatewayUrl = (import.meta.env.VITE_API_GATEWAY_URL || import.meta.env.V
 const buildChatWebSocketUrl = (token) => {
   const encodedToken = encodeURIComponent(token)
   if (import.meta.env.DEV) {
-    return `/chat-ws/chat-service/ws?token=${encodedToken}`
+    const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    return `${scheme}://${window.location.host}/chat-ws/chat-service/ws/websocket?token=${encodedToken}`
   }
-  return `${apiGatewayUrl}/chat-service/ws?token=${encodedToken}`
+  const wsBaseUrl = apiGatewayUrl.replace(/^http/, 'ws')
+  return `${wsBaseUrl}/chat-service/ws/websocket?token=${encodedToken}`
 }
 
 // WebSocket Connection using new STOMP Client API
@@ -257,9 +258,9 @@ const connectWebSocket = () => {
     }
   }
 
-  // Use new Client API (fixes "did not receive a factory" warning)
+  // Use native WebSocket URL to avoid deprecated unload handlers in SockJS
   stompClient = new Client({
-    webSocketFactory: () => new SockJS(buildChatWebSocketUrl(token)),
+    brokerURL: buildChatWebSocketUrl(token),
     connectHeaders: {
       'Authorization': `Bearer ${token}`
     },
