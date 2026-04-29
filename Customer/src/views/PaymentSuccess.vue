@@ -83,6 +83,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -123,7 +124,7 @@ const verifyPayment = async () => {
     if (status) query.set('status', status)
 
     // Gọi endpoint success để BE xác nhận booking ngay khi PayOS redirect về
-    const response = await fetch(`/api/payment-service/payos/success?${query.toString()}`, {
+    const response = await apiFetch(`/api/payment-service/payos/success?${query.toString()}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }

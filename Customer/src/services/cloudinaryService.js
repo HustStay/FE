@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { CLOUDINARY_CONFIG, FILE_CONFIG } from '../utils/cloudinaryConfig.js'
 
 class CloudinaryService {
@@ -26,11 +27,11 @@ class CloudinaryService {
 
       const response = await this.uploadWithProgress(uploadUrl, formData, onProgress)
 
-      if (!response.ok) {
+      if (response.status < 200 || response.status >= 300) {
         throw new Error(`Upload failed: ${response.status}`)
       }
 
-      const result = await response.json()
+      const result = response.data
 
       // Generate thumbnail for images
       let thumbnailUrl = null
@@ -61,36 +62,13 @@ class CloudinaryService {
    * Upload with progress tracking
    */
   uploadWithProgress(url, formData, onProgress) {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest()
-
-      if (onProgress) {
-        xhr.upload.addEventListener('progress', (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded / event.total) * 100)
-            onProgress(progress)
-          }
-        })
-      }
-
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve({
-            ok: true,
-            status: xhr.status,
-            json: () => Promise.resolve(JSON.parse(xhr.responseText))
-          })
-        } else {
-          reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`))
+    return axios.post(url, formData, {
+      onUploadProgress: (event) => {
+        if (onProgress && event.total) {
+          const progress = Math.round((event.loaded / event.total) * 100)
+          onProgress(progress)
         }
-      })
-
-      xhr.addEventListener('error', () => {
-        reject(new Error('Network error during upload'))
-      })
-
-      xhr.open('POST', url)
-      xhr.send(formData)
+      }
     })
   }
 

@@ -53,7 +53,7 @@
             </div>
             
             <div class="card-image">
-              <img :src="booking.hotelImage || 'https://via.placeholder.com/500x300'" :alt="booking.hotelName" />
+              <img :src="booking.hotelImage" :alt="booking.hotelName" />
             </div>
             
             <div class="card-content">
@@ -145,6 +145,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
 const activeTab = ref('upcoming')
@@ -152,114 +153,44 @@ const bookings = ref([])
 const loading = ref(false)
 const selectedBooking = ref(null)
 
-// Mock data for bookings
-const mockBookings = [
-  {
-    id: 1,
-    hotelId: 1,
-    hotelName: 'Sunset Beach Resort & Spa',
-    location: 'Đà Nẵng, Việt Nam',
-    hotelImage: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=500&h=300&fit=crop',
-    checkInDate: '2025-12-15',
-    checkOutDate: '2025-12-18',
-    guests: 2,
-    status: 'PENDING',
-    roomType: 'DELUXE',
-    totalRooms: 1
-  },
-  {
-    id: 2,
-    hotelId: 2,
-    hotelName: 'Grand Hotel Central',
-    location: 'Hà Nội, Việt Nam',
-    hotelImage: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=500&h=300&fit=crop',
-    checkInDate: '2025-12-20',
-    checkOutDate: '2025-12-23',
-    guests: 3,
-    status: 'PENDING',
-    roomType: 'STANDARD',
-    totalRooms: 2
-  },
-  {
-    id: 3,
-    hotelId: 3,
-    hotelName: 'Paradise Beach Hotel',
-    location: 'Nha Trang, Việt Nam',
-    hotelImage: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=500&h=300&fit=crop',
-    checkInDate: '2025-10-10',
-    checkOutDate: '2025-10-13',
-    guests: 2,
-    status: 'COMPLETED',
-    roomType: 'SUPERIOR',
-    totalRooms: 1
-  },
-  {
-    id: 4,
-    hotelId: 4,
-    hotelName: 'Luxury City View Hotel',
-    location: 'Hồ Chí Minh, Việt Nam',
-    hotelImage: 'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=500&h=300&fit=crop',
-    checkInDate: '2025-09-05',
-    checkOutDate: '2025-09-08',
-    guests: 4,
-    status: 'COMPLETED',
-    roomType: 'DELUXE',
-    totalRooms: 2
-  },
-  {
-    id: 5,
-    hotelId: 5,
-    hotelName: 'Riverside Resort & Spa',
-    location: 'Huế, Việt Nam',
-    hotelImage: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=500&h=300&fit=crop',
-    checkInDate: '2025-11-01',
-    checkOutDate: '2025-11-03',
-    guests: 2,
-    status: 'CANCELLED',
-    roomType: 'STANDARD',
-    totalRooms: 1
-  }
-]
-
 // Fetch bookings from API
 const fetchBookings = async () => {
   loading.value = true
   try {
     const token = localStorage.getItem('token')
     const userId = localStorage.getItem('userId')
-    console.log('🔍 Fetching bookings from API...')
+    console.log('Fetching bookings from API...')
     console.log('Token exists:', !!token)
-    console.log('👤 UserId:', userId)
+    console.log(' UserId:', userId)
 
     if (!token) {
-      console.error('❌ No token found! Redirecting to login...')
+      console.error('No token found! Redirecting to login...')
       router.push('/')
       return
     }
 
     if (!userId) {
-      console.warn('⚠️ No userId found! This might cause issues.')
+      console.warn('No userId found! This might cause issues.')
     }
 
-    const response = await fetch('/api/booking-service/bookings', {
+    const response = await apiFetch('/api/booking-service/bookings', {
       headers: {
         'Authorization': `Bearer ${token}`,
-        'X-Auth-UserId': userId || '',
         'Content-Type': 'application/json'
       }
     })
 
-    console.log('📡 Bookings API Response:', response.status, response.statusText)
-    console.log('🔗 Request URL:', response.url)
+    console.log('Bookings API Response:', response.status, response.statusText)
+    console.log('Request URL:', response.url)
 
     if (response.ok) {
       const data = await response.json()
-      console.log('✅ Raw API data:', data)
+      console.log('Raw API data:', data)
 
       // Map API response to UI format
       if (data.bookings && Array.isArray(data.bookings)) {
         bookings.value = data.bookings.map(booking => {
-          console.log('📝 Mapping booking:', booking)
+          console.log('Mapping booking:', booking)
           return {
             id: booking.id,
             hotelId: booking.hotelId || booking.id,
@@ -273,20 +204,20 @@ const fetchBookings = async () => {
           }
         })
         console.log('Mapped bookings:', bookings.value)
+      } else if (data.message === 'No bookings found') {
+        bookings.value = []
       } else {
-        console.log('⚠️ No bookings array in response, using mock data')
-        bookings.value = mockBookings
+        console.log('No bookings array in response')
+        bookings.value = []
       }
     } else {
       const errorText = await response.text()
-      console.error('❌ API Error:', errorText)
-      console.log('📋 Falling back to mock data')
-      bookings.value = mockBookings
+      console.error('API Error:', errorText)
+      bookings.value = []
     }
   } catch (error) {
-    console.error('❌ Error fetching bookings:', error)
-    console.log('📋 Falling back to mock data')
-    bookings.value = mockBookings
+    console.error('Error fetching bookings:', error)
+    bookings.value = []
   } finally {
     loading.value = false
   }
@@ -294,8 +225,8 @@ const fetchBookings = async () => {
 
 // Filter bookings based on active tab
 const filteredBookings = computed(() => {
-  console.log('🔄 Filtering bookings. Active tab:', activeTab.value)
-  console.log('📋 All bookings:', bookings.value)
+  console.log(' Filtering bookings. Active tab:', activeTab.value)
+  console.log(' All bookings:', bookings.value)
 
   const filtered = bookings.value.filter(booking => {
     if (activeTab.value === 'upcoming') {
@@ -370,13 +301,11 @@ const cancelBooking = async (booking) => {
 
   try {
     const token = localStorage.getItem('token')
-    const userId = localStorage.getItem('userId')
 
-    const response = await fetch('/api/booking-service/bookings/status', {
+    const response = await apiFetch('/api/booking-service/bookings/status', {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
-        'X-Auth-UserId': userId,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -400,10 +329,10 @@ const cancelBooking = async (booking) => {
   }
 }
 
-const manageBooking = (booking) => {
-  // Navigate to booking management or show modal
-  console.log('Manage booking:', booking)
-}
+// const manageBooking = (booking) => {
+//   // Navigate to booking management or show modal
+//   console.log('Manage booking:', booking)
+// }
 
 onMounted(() => {
   fetchBookings()

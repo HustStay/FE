@@ -257,17 +257,16 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 // Role name -> roleId mapping (must match DB roles table)
 const ROLE_MAP = {
   'receptionist': 4,
-  'customer_support': 5,
-  'content_staff': 6
+  'content_staff': 5
 }
 
 const ROLE_LABELS = {
   'receptionist': 'Lễ tân',
-  'customer_support': 'CSKH',
   'content_staff': 'Nội dung'
 }
 
@@ -310,15 +309,14 @@ const getInitials = (name) => {
 const getRoleClass = (role) => {
   const roleClasses = {
     'receptionist': 'role-receptionist',
-    'customer_support': 'role-support',
     'content_staff': 'role-content'
   }
   return roleClasses[role] || ''
 }
 
-const countByRole = (roleName) => {
-  return accounts.value.filter(a => a.role === roleName).length
-}
+// const countByRole = (roleName) => {
+//   return accounts.value.filter(a => a.role === roleName).length
+// }
 
 const filteredAccounts = computed(() => {
   return accounts.value.filter(account => {
@@ -339,7 +337,7 @@ const fetchAccounts = async () => {
   try {
     const token = getToken()
     const hotelId = localStorage.getItem('hotelId')
-    const response = await fetch(`/api/user-service/accountsByHotel?hotelId=${hotelId}`, {
+    const response = await apiFetch(`/api/user-service/accountsByHotel?hotelId=${hotelId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -392,7 +390,7 @@ const handleAddStaff = async () => {
       role: roleId
     }
 
-    const response = await fetch(`/api/user-service/addAccountHotel?hotelId=${hotelId}`, {
+    const response = await apiFetch(`/api/user-service/addAccountHotel?hotelId=${hotelId}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -430,7 +428,7 @@ const handleRoleChange = async (account, event) => {
   if (confirm(`Xác nhận đổi vai trò nhân viên "${account.fullName}" thành "${ROLE_LABELS[newRole]}"?`)) {
     try {
       const token = getToken()
-      const response = await fetch('/api/user-service/updateRole', {
+      const response = await apiFetch('/api/user-service/updateRole', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -467,7 +465,7 @@ const toggleLockAccount = async (account) => {
   if (confirm(`Xác nhận ${action} tài khoản "${account.fullName}"?`)) {
     try {
       const token = getToken()
-      const response = await fetch('/api/user-service/lockAccount', {
+      const response = await apiFetch('/api/user-service/lockAccount', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

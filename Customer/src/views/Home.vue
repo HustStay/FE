@@ -83,7 +83,7 @@
                         </div>
                     </div>
                     <div class="hotel-rating">
-                        <span>⭐</span>
+                        <span class="rating-star">★</span>
                         {{ hotel.rating }}
                     </div>
                 </div>
@@ -189,7 +189,7 @@
                         </div>
                     </div>
                     <div class="hotel-rating">
-                        <span>⭐</span>
+                        <span class="rating-star">★</span>
                         {{ hotel.rating }}
                     </div>
                 </div>
@@ -230,6 +230,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
 
@@ -363,7 +364,7 @@ const handleSearch = async () => {
             numberOfRooms: searchForm.value.rooms
         }
 
-        const response = await fetch('/api/hotel-service/hotels/search', {
+        const response = await apiFetch('/api/hotel-service/hotels/search', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -409,7 +410,7 @@ const handleSearch = async () => {
 const fetchHotels = async () => {
     try {
         const token = localStorage.getItem('token')
-        const response = await fetch('/api/hotel-service/hotels', {
+        const response = await apiFetch('/api/hotel-service/hotels', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -446,7 +447,7 @@ const fetchAllHotels = async () => {
     isLoadingAllHotels.value = true
     try {
         const token = localStorage.getItem('token')
-        const response = await fetch('/api/hotel-service/allHotel', {
+        const response = await apiFetch('/api/hotel-service/allHotel', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,

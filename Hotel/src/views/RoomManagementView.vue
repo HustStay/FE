@@ -333,6 +333,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 
 const searchQuery = ref('')
@@ -366,7 +367,7 @@ const rooms = ref([])
 const fetchRooms = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch('/api/room-service/rooms/all', {
+    const response = await apiFetch('/api/room-service/rooms/all', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -506,7 +507,7 @@ const handleUpdateRoom = async () => {
       roomDescription: editRoom.value.description || null
     }
 
-    const response = await fetch('/api/room-service/room/update', {
+    const response = await apiFetch('/api/room-service/room/update', {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -553,7 +554,7 @@ const handleToggleActive = async (room) => {
       isActive: newActiveStatus
     }
 
-    const response = await fetch('/api/room-service/room/active', {
+    const response = await apiFetch('/api/room-service/room/active', {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -605,7 +606,7 @@ const handleAddRoom = async () => {
     }
 
     const token = localStorage.getItem('token')
-    const response = await fetch('/api/room-service/room/add', {
+    const response = await apiFetch('/api/room-service/room/add', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
