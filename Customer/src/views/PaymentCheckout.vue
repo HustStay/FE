@@ -35,6 +35,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -88,7 +89,7 @@ const loadPaymentInfo = async () => {
     }
 
     const token = localStorage.getItem('token')
-    const response = await fetch(`/api/payment-service/payos/payment/${orderCode}`, {
+    const response = await apiFetch(`/api/payment-service/payos/payment/${orderCode}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }

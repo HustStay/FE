@@ -203,6 +203,7 @@ import Sidebar from '../components/Sidebar.vue'
 import { Client } from '@stomp/stompjs'
 import cloudinaryService from '@/services/cloudinaryService.js'
 import { FILE_CONFIG, getDownloadUrl } from '@/utils/cloudinaryConfig.js'
+import { apiFetch } from '../utils/apiClient.js'
 
 const conversations = ref([])
 const selectedConversation = ref(null)
@@ -391,7 +392,7 @@ const loadConversations = async () => {
     console.log(' Loading conversations with token:', token ? 'Present' : 'Missing')
 
     // Get hotel's conversations through API Gateway
-    const response = await fetch('/api/chat-service/chat/conversations', {
+    const response = await apiFetch('/api/chat-service/chat/conversations', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -465,7 +466,7 @@ const loadMessages = async (conversationId) => {
     const url = `/api/chat-service/chat/messages?conversationId=${conversationId}`
     console.log(' Hotel loading messages from URL:', url)
 
-    const response = await fetch(url, {
+    const response = await apiFetch(url, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -503,7 +504,7 @@ const loadMessages = async (conversationId) => {
 const markCustomerMessagesAsRead = async (conversationId) => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch(`/api/chat-service/chat/messages/mark-read?conversationId=${conversationId}&readerType=1`, {
+    const response = await apiFetch(`/api/chat-service/chat/messages/mark-read?conversationId=${conversationId}&readerType=1`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`

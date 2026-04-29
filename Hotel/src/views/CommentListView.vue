@@ -97,6 +97,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 const searchQuery = ref('')
 const starFilter = ref('')
@@ -111,7 +112,7 @@ const fetchComments = async () => {
   
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch('/api/review-service/comments', {
+    const response = await apiFetch('/api/review-service/comments', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

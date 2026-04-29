@@ -180,6 +180,7 @@ import { ref, onUnmounted, nextTick } from 'vue'
 import { Client } from '@stomp/stompjs'
 import cloudinaryService from '@/services/cloudinaryService.js'
 import { FILE_CONFIG, getDownloadUrl } from '@/utils/cloudinaryConfig.js'
+import { apiFetch } from '../utils/apiClient.js'
 
 const props = defineProps({
   hotelId: {
@@ -323,7 +324,7 @@ const initializeChat = async () => {
     const token = localStorage.getItem('token')
 
     // Start/get conversation
-    const response = await fetch('/api/chat-service/chat/start', {
+    const response = await apiFetch('/api/chat-service/chat/start', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -355,7 +356,7 @@ const initializeChat = async () => {
 const loadMessages = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch(
+    const response = await apiFetch(
       `/api/chat-service/chat/messages?conversationId=${conversationId.value}`,
       {
         headers: {
@@ -382,7 +383,7 @@ const loadMessages = async () => {
 const markHotelMessagesAsRead = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch(`/api/chat-service/chat/messages/mark-read?conversationId=${conversationId.value}&readerType=0`, {
+    const response = await apiFetch(`/api/chat-service/chat/messages/mark-read?conversationId=${conversationId.value}&readerType=0`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${token}`

@@ -124,6 +124,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 const searchQuery = ref('')
 const statusFilter = ref('')
@@ -133,11 +134,13 @@ const bookings = ref([])
 const fetchBookings = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch('/api/booking-service/owner/bookings', {
+    const hotelId = localStorage.getItem('hotelId')
+    const response = await apiFetch('/api/booking-service/owner/bookings', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
-      }
+      },
+      params: hotelId ? { hotelId } : {}
     })
 
     if (response.status === 401) {
@@ -227,7 +230,7 @@ const checkInBooking = async (booking) => {
   if (confirm(`Xác nhận check-in cho khách ${booking.customerName}?`)) {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/booking-service/checkInCheckOut', {
+      const response = await apiFetch('/api/booking-service/checkInCheckOut', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -258,7 +261,7 @@ const checkOutBooking = async (booking) => {
   if (confirm(`Xác nhận check-out cho khách ${booking.customerName}?`)) {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/booking-service/checkInCheckOut', {
+      const response = await apiFetch('/api/booking-service/checkInCheckOut', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

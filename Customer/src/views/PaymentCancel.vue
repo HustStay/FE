@@ -44,6 +44,7 @@
 import { onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -68,7 +69,7 @@ onMounted(() => {
   const token = localStorage.getItem('token')
 
   if (orderCode) {
-    fetch(`/api/payment-service/payos/cancel/${orderCode}`, {
+    apiFetch(`/api/payment-service/payos/cancel/${orderCode}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`

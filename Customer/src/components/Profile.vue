@@ -154,6 +154,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import Navbar from '@/components/Navbar.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 const activeTab = ref('info')
 
@@ -188,7 +189,7 @@ const fetchProfile = async () => {
             return
         }
 
-        const response = await fetch('/api/user-service/profile', {
+        const response = await apiFetch('/api/user-service/profile', {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -227,7 +228,7 @@ const changePassword = async () => {
 
     try {
         const token = localStorage.getItem('token')
-        const response = await fetch('/api/user-service/password', {
+        const response = await apiFetch('/api/user-service/password', {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,

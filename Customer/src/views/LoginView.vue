@@ -122,6 +122,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -155,7 +156,7 @@ const registerForm = ref({
 
 const handleLogin = async () => {
     try {
-        const response = await fetch('/api/user-service/auth/login', {
+        const response = await apiFetch('/api/user-service/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -190,7 +191,7 @@ const handleLogin = async () => {
 
 const handleRegister = async () => {
     try {
-        const response = await fetch('/api/user-service/auth/register', {
+        const response = await apiFetch('/api/user-service/auth/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -58,6 +58,7 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { apiFetch } from "../utils/apiClient.js";
 
 const router = useRouter();
 
@@ -68,7 +69,7 @@ const loginForm = ref({
 
 const handleLogin = async () => {
   try {
-    const response = await fetch("/api/user-service/auth/login", {
+    const response = await apiFetch("/api/user-service/auth/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -83,22 +84,28 @@ const handleLogin = async () => {
 
     if (response.ok) {
       if (data.message === "Login successful") {
-        if (data.role === 2) {
+        if (data.role === 2 || data.role === 4 || data.role === 5 || data.role === 6) {
           localStorage.setItem("token", data.token);
           localStorage.setItem("role", data.role);
           localStorage.setItem("userId", data.userId);
 
-          // Fetch hotelId for this user
+          // Fetch hotelId for this user (owner/staff) right after login
           try {
-            const hotelRes = await fetch(`/api/hotel-service/hotelId?userId=${data.userId}`, {
+            const hotelRes = await apiFetch('/api/hotel-service/login-hotelId', {
               headers: {
                 'Authorization': `Bearer ${data.token}`,
                 'Content-Type': 'application/json'
-              }
+              },
+              params: {
+                userId: data.userId,
+                role: data.role
+              },
             });
             const hotelData = await hotelRes.json();
             if (hotelData.hotelId) {
               localStorage.setItem("hotelId", hotelData.hotelId);
+            } else {
+              localStorage.removeItem("hotelId");
             }
           } catch (e) {
             console.error('Failed to fetch hotelId:', e);

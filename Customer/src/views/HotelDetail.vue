@@ -266,11 +266,11 @@
     </div>
 
     <!-- Chat Widget -->
-    <ChatWidget
+    <!-- <ChatWidget
       v-if="hotel.hotelName"
       :hotelId="parseInt(hotelId)"
       :hotelName="hotel.hotelName"
-    />
+    /> -->
   </div>
 </template>
 
@@ -279,6 +279,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
 import ChatWidget from '@/components/ChatWidget.vue'
+import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
 const hotelId = router.currentRoute.value.params.id
@@ -321,7 +322,7 @@ const amenitiesList = ref([])
 const fetchHotelDetail = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch(`/api/hotel-service/hotel-detail?hotelId=${hotelId}`, {
+    const response = await apiFetch(`/api/hotel-service/hotel-detail?hotelId=${hotelId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -362,7 +363,7 @@ const fetchHotelDetail = async () => {
 const fetchRooms = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch(`/api/room-service/rooms?hotelId=${hotelId}`, {
+    const response = await apiFetch(`/api/room-service/rooms?hotelId=${hotelId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -392,7 +393,7 @@ const fetchRooms = async () => {
 const fetchComments = async () => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch(`/api/review-service/comment?hotelId=${hotelId}`, {
+    const response = await apiFetch(`/api/review-service/comment?hotelId=${hotelId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -445,7 +446,7 @@ const submitComment = async () => {
 
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch('/api/review-service/comment', {
+    const response = await apiFetch('/api/review-service/comment', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -643,7 +644,7 @@ const bookNow = async () => {
     console.log('🏨 Creating booking with data:', bookingData)
 
     // Step 1: Create booking
-    const bookingResponse = await fetch('/api/booking-service/booking', {
+    const bookingResponse = await apiFetch('/api/booking-service/booking', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -683,7 +684,7 @@ const bookNow = async () => {
 
       console.log('💳 Creating PayOS payment link with data:', paymentData)
 
-      const paymentResponse = await fetch('/api/payment-service/payos/create-payment-link', {
+      const paymentResponse = await apiFetch('/api/payment-service/payos/create-payment-link', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
