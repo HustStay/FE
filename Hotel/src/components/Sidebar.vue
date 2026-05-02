@@ -58,12 +58,12 @@
           </svg>
           <span>Nhân viên</span>
         </router-link>
-        <router-link to="/chat" class="nav-item" :class="{ active: isActive('/chat') }" @click="closeSidebar">
+        <!-- <router-link to="/chat" class="nav-item" :class="{ active: isActive('/chat') }" @click="closeSidebar">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>
           <span>Tin nhắn</span>
-        </router-link>
+        </router-link> -->
         <a href="#" class="nav-item" @click.prevent="handleLogout">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
