@@ -1,78 +1,71 @@
 <template>
-  <div class="payment-success-page">
+  <div class="payment-result-page">
     <Navbar />
 
-    <div class="container">
-      <!-- Success State -->
-      <div v-if="paymentStatus === 'success'" class="success-content">
-        <div class="success-icon">
-          <svg width="100" height="100" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="12" fill="#4ade80"/>
-            <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <div class="result-shell">
+      <div v-if="paymentStatus === 'success'" class="result-card success-state">
+        <div class="status-icon success-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="12" fill="#22c55e" />
+            <path d="M8 12.5l2.5 2.5L16 9.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </div>
 
-        <h1 class="success-title">Thanh toán thành công!</h1>
-        <p class="success-message">
-          Cảm ơn bạn đã đặt phòng. Booking của bạn đã được xác nhận và thanh toán thành công.
-        </p>
+        <h1 class="result-title">Thanh toán thành công</h1>
+        <p class="result-message">Booking của bạn đã được xác nhận. Chúng tôi đã ghi nhận thanh toán thành công.</p>
 
-        <div v-if="bookingInfo" class="booking-details">
-          <h3>Thông tin đặt phòng</h3>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <span class="label">Mã booking:</span>
-              <span class="value">#{{ bookingInfo.bookingId }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">Số tiền đã thanh toán:</span>
-              <span class="value">{{ formatPrice(bookingInfo.amount) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="label">Trạng thái:</span>
-              <span class="value success-status">Đã thanh toán</span>
-            </div>
+        <div v-if="bookingInfo" class="detail-box">
+          <h3>Thông tin giao dịch</h3>
+          <div class="detail-row">
+            <span>Mã booking</span>
+            <strong>#{{ bookingInfo.bookingId }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Số tiền đã thanh toán</span>
+            <strong>{{ formatPrice(bookingInfo.amount) }}</strong>
+          </div>
+          <div class="detail-row">
+            <span>Trạng thái</span>
+            <strong class="status-chip paid">Đã thanh toán</strong>
           </div>
         </div>
 
         <div class="action-buttons">
-          <button @click="goToBookings" class="primary-btn">
-            Xem booking của tôi
-          </button>
-          <button @click="goHome" class="secondary-btn">
-            Về trang chủ
-          </button>
+          <button @click="goToBookings" class="primary-btn">Xem booking của tôi</button>
+          <button @click="goHome" class="secondary-btn">Về trang chủ</button>
         </div>
       </div>
 
-      <!-- Loading State -->
-      <div v-else-if="paymentStatus === 'loading'" class="loading-content">
-        <div class="loading-spinner">
+      <div v-else-if="paymentStatus === 'loading'" class="result-card loading-state">
+        <div class="status-icon loading-icon">
           <div class="spinner"></div>
         </div>
-        <h2>Đang xác nhận thanh toán...</h2>
-        <p>Vui lòng chờ trong giây lát</p>
+        <h1 class="result-title">Đang xác nhận thanh toán...</h1>
+        <p class="result-message">Vui lòng chờ trong giây lát, hệ thống đang đối soát kết quả từ PayOS.</p>
       </div>
 
-      <!-- Error State -->
-      <div v-else-if="paymentStatus === 'error'" class="error-content">
-        <div class="error-icon">
-          <svg width="100" height="100" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="12" fill="#ef4444"/>
-            <path d="M15 9l-6 6M9 9l6 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <div v-else-if="paymentStatus === 'error'" class="result-card error-state">
+        <div class="status-icon error-icon">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="12" fill="#ef4444" />
+            <path d="M15 9L9 15M9 9l6 6" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </div>
 
-        <h1 class="error-title">Không thể xác nhận thanh toán</h1>
-        <p class="error-message">{{ errorMessage }}</p>
+        <h1 class="result-title">Không thể xác nhận thanh toán</h1>
+        <p class="result-message">{{ errorMessage }}</p>
+
+        <div class="note-box">
+          <p><strong>Lưu ý:</strong></p>
+          <ul>
+            <li>Nếu bạn đã trừ tiền, vui lòng chờ vài phút rồi kiểm tra lại booking.</li>
+            <li>Nếu thanh toán chưa hoàn tất, bạn có thể thực hiện lại giao dịch.</li>
+          </ul>
+        </div>
 
         <div class="action-buttons">
-          <button @click="goToBookings" class="primary-btn">
-            Xem booking của tôi
-          </button>
-          <button @click="goHome" class="secondary-btn">
-            Về trang chủ
-          </button>
+          <button @click="goToBookings" class="primary-btn">Xem booking của tôi</button>
+          <button @click="goHome" class="secondary-btn">Về trang chủ</button>
         </div>
       </div>
     </div>
@@ -93,7 +86,7 @@ const bookingInfo = ref(null)
 const errorMessage = ref('')
 
 const formatPrice = (price) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price).replace('₫', 'đ')
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(price) || 0).replace('₫', 'đ')
 }
 
 const goToBookings = () => {
@@ -177,40 +170,49 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.container {
-  max-width: 800px;
+.payment-result-page {
+  min-height: 100vh;
+  background: #f8f5ef;
+}
+
+.result-shell {
+  max-width: 920px;
   margin: 0 auto;
-  padding: 6rem 1rem 3rem;
+  padding: 6rem 1rem 2rem;
 }
 
-.success-content,
-.loading-content,
-.error-content {
+.result-card {
   text-align: center;
-  background: white;
-  border-radius: 16px;
-  padding: 3rem 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: #f8f6f2;
+  border-radius: 24px;
+  border: 1px solid #e2dcd3;
+  padding: 2.2rem 1.8rem;
 }
 
-.success-icon,
-.error-icon {
+.status-icon {
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 1.35rem;
   display: flex;
+  align-items: center;
   justify-content: center;
-  margin-bottom: 2rem;
 }
 
-.loading-spinner {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 2rem;
+.status-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.loading-icon {
+  border-radius: 50%;
+  background: #f4ecdf;
 }
 
 .spinner {
-  width: 60px;
-  height: 60px;
-  border: 4px solid #e0e0e0;
-  border-top-color: #22a6d6;
+  width: 58px;
+  height: 58px;
+  border: 5px solid #e3dbce;
+  border-top-color: #75553c;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -219,81 +221,87 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
-.success-title,
-.error-title {
-  font-size: 2rem;
+.result-title {
+  margin: 0;
+  color: #2f2418;
+  font-size: clamp(1.8rem, 2.8vw, 2.9rem);
   font-weight: 700;
-  margin-bottom: 1rem;
-  color: #333;
 }
 
-.success-message,
-.error-message {
-  font-size: 1.1rem;
-  color: #666;
-  margin-bottom: 2rem;
-  line-height: 1.6;
+.result-message {
+  margin: 0.9rem auto 0;
+  max-width: 760px;
+  color: #6f6457;
+  font-size: 1.15rem;
+  line-height: 1.65;
 }
 
-.loading-content h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: #333;
+.detail-box,
+.note-box {
+  margin: 1.8rem auto 0;
+  max-width: 820px;
+  text-align: left;
+  background: #f2ede5;
+  border: 1px solid #ddd4c7;
+  border-radius: 18px;
+  padding: 1.2rem 1.25rem;
 }
 
-.loading-content p {
-  color: #666;
+.detail-box h3 {
+  margin: 0 0 0.75rem;
+  color: #3c2f23;
+  font-size: 1.28rem;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.78rem 0;
+  border-top: 1px dashed #d3c7b8;
+}
+
+.detail-row:first-of-type {
+  border-top: none;
+}
+
+.detail-row span {
+  color: #6f6357;
   font-size: 1rem;
 }
 
-.booking-details {
-  background: #f8fafb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin: 2rem 0;
-  border: 1px solid #e7eef1;
+.detail-row strong {
+  color: #2d2217;
+  font-size: 1.02rem;
 }
 
-.booking-details h3 {
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  color: #333;
-}
-
-.detail-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.detail-item {
-  display: flex;
-  justify-content: space-between;
+.status-chip {
+  display: inline-flex;
   align-items: center;
-  padding: 0.75rem;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e7eef1;
+  border-radius: 999px;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.86rem;
+  border: 1px solid transparent;
 }
 
-.label {
-  font-weight: 600;
-  color: #666;
-}
-
-.value {
-  font-weight: 700;
-  color: #333;
-}
-
-.success-status {
-  color: #4ade80;
+.status-chip.paid {
+  color: #0f6a3d;
   background: #dcfce7;
-  padding: 0.25rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  border-color: #b7ebca;
+}
+
+.note-box p {
+  margin: 0 0 0.5rem;
+  color: #3f3326;
+}
+
+.note-box ul {
+  margin: 0;
+  padding-left: 1rem;
+  color: #5f5245;
+  display: grid;
+  gap: 0.4rem;
 }
 
 .action-buttons {
@@ -301,75 +309,69 @@ onMounted(() => {
   gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
+  margin-top: 1.8rem;
 }
 
 .primary-btn,
 .secondary-btn {
-  padding: 0.875rem 2rem;
-  border-radius: 10px;
-  border: none;
-  font-weight: 600;
-  font-size: 1rem;
+  min-width: 220px;
+  padding: 0.85rem 1.4rem;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  font-size: 1.06rem;
   cursor: pointer;
-  transition: all 0.3s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  transition: all 0.2s ease;
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #22a6d6, #1a8bb5);
-  color: white;
+  background: #75553c;
+  color: #fff;
 }
 
 .primary-btn:hover {
-  background: linear-gradient(135deg, #1a8bb5, #157a9e);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(34, 166, 214, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(117, 85, 60, 0.25);
 }
 
 .secondary-btn {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #e7eef1;
+  background: #ebe6dd;
+  color: #3d2f22;
+  border-color: #d6ccbe;
 }
 
 .secondary-btn:hover {
-  background: #e5e7eb;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-}
-
-.btn-icon {
-  font-size: 1.1rem;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 14px rgba(61, 47, 34, 0.12);
 }
 
 @media (max-width: 640px) {
-  .container {
-    padding: 4rem 1rem 2rem;
+  .result-shell {
+    padding: 5rem 0.85rem 1.3rem;
   }
 
-  .success-content,
-  .loading-content,
-  .error-content {
-    padding: 2rem 1.5rem;
+  .result-card {
+    padding: 1.6rem 1rem;
+    border-radius: 18px;
   }
 
-  .action-buttons {
+  .result-title {
+    font-size: 1.8rem;
+  }
+
+  .result-message {
+    font-size: 1rem;
+  }
+
+  .detail-row {
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
+    gap: 0.35rem;
   }
 
   .primary-btn,
   .secondary-btn {
     width: 100%;
-    max-width: 300px;
-  }
-
-  .detail-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
   }
 }
 </style>
