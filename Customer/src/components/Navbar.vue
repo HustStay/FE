@@ -1,54 +1,72 @@
 <template>
-    <nav class="navbar">
-        <div class="nav-content">
-            <div class="logo">
-                <span class="logo-text" @click.prevent="goToHome">TravelStay</span>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo" @click.prevent="goToHome">
+                <div class="logo-icon">T</div>
+                <span class="logo-text">Travelstay</span>
             </div>
             
+            <nav class="nav-links">
+                <a href="#" @click.prevent="goToHome">Khám phá</a>
+                <a href="#" @click.prevent="goToAllHotels">Khách sạn</a>
+                <a href="#" @click.prevent="goToBookings">Đặt phòng của tôi</a>
+            </nav>
+
+            <div class="nav-actions">
+                <div class="user-menu">
+                    <a href="#" class="user-icon-link" @click.prevent="toggleMenu">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <span class="user-label">Tài khoản</span>
+                    </a>
+                    <div v-if="showMenu" class="dropdown-menu">
+                        <div class="dropdown-header">Tài khoản của tôi</div>
+                        <a href="#" class="dropdown-item" @click.prevent="goToProfile">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            Hồ sơ
+                        </a>
+                        <a href="#" class="dropdown-item" @click.prevent="goToBookings">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            Đặt phòng
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item logout" @click.prevent="logout">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            Đăng xuất
+                        </a>
+                    </div>
+                </div>
+            </div>
+
             <!-- Hamburger Menu Button (Mobile) -->
             <button class="hamburger" @click="toggleMobileMenu" :class="{ active: showMobileMenu }">
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
             </button>
-            
-            <!-- Desktop Navigation -->
-            <div class="nav-links" :class="{ 'mobile-open': showMobileMenu }">
-                <a href="#" class="nav-link" @click.prevent="goToBookings">
-                    <img width="25" height="25" src="https://img.icons8.com/windows/32/calendar-minus.png" alt="calendar-minus"/>
-                    Đặt phòng của tôi
-                </a>
-                <div class="user-menu">
-                    <a href="#" class="nav-link user-icon" @click.prevent="toggleMenu">
-                        <img width="25" height="25" src="https://img.icons8.com/windows/32/gender-neutral-user.png"
-                            alt="gender-neutral-user" />
-                        <span class="mobile-only">Tài khoản</span>
-                    </a>
-                    <div v-if="showMenu" class="dropdown-menu">
-                        <div class="dropdown-header">
-                            Tài khoản của tôi
-                        </div>
-                        <a href="#" class="dropdown-item" @click.prevent="goToProfile">
-                            <img width="25" height="25" src="https://img.icons8.com/windows/32/gender-neutral-user.png"
-                            alt="gender-neutral-user" />
-                            Hồ sơ
-                        </a>
-                        <a href="#" class="dropdown-item" @click.prevent="goToBookings">
-                            <img width="25" height="25" src="https://img.icons8.com/windows/32/calendar-minus.png" alt="calendar-minus"/>
-                            Đặt phòng
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="#" class="dropdown-item logout" @click.prevent="logout">
-                            Đăng xuất
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Mobile Menu Overlay -->
-            <div class="mobile-overlay" v-if="showMobileMenu" @click="closeMobileMenu"></div>
         </div>
-    </nav>
+
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-overlay" v-if="showMobileMenu" @click="closeMobileMenu"></div>
+        
+        <!-- Mobile Drawer -->
+        <div class="mobile-drawer" :class="{ 'open': showMobileMenu }">
+            <div class="drawer-header">
+                <div class="logo">
+                    <div class="logo-icon">T</div>
+                    <span class="logo-text">Travelstay</span>
+                </div>
+                <button class="close-btn" @click="closeMobileMenu">&times;</button>
+            </div>
+            <div class="drawer-content">
+                <a href="#" class="drawer-link" @click.prevent="goToHome">Khám phá</a>
+                <a href="#" class="drawer-link" @click.prevent="goToAllHotels">Khách sạn</a>
+                <a href="#" class="drawer-link" @click.prevent="goToBookings">Đặt phòng của tôi</a>
+                <div class="drawer-divider"></div>
+                <a href="#" class="drawer-link" @click.prevent="goToProfile">Hồ sơ của tôi</a>
+                <a href="#" class="drawer-link logout" @click.prevent="logout">Đăng xuất</a>
+            </div>
+        </div>
+    </header>
 </template>
 
 <script setup>
@@ -62,6 +80,11 @@ const showMobileMenu = ref(false)
 const goToHome = () => {
     closeMobileMenu()
     router.push('/home')
+}
+
+const goToAllHotels = () => {
+    closeMobileMenu()
+    router.push('/hotels')
 }
 
 const toggleMenu = () => {
@@ -118,156 +141,203 @@ const logout = () => {
 
 <style scoped>
 /* Navigation */
-.navbar {
+.header {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    background: hsl(0 0% 100% / 0.95);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    z-index: 100;
+    background-color: #FCFBF7;
+    padding: 20px 0;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
-@supports (backdrop-filter: blur(12px)) {
-    .navbar {
-        background: hsl(0 0% 100% / 0.6);
-    }
-}
-
-.nav-content {
-    max-width: 1400px;
+.header-container {
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 1rem 2rem;
+    padding: 0 20px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 }
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #22a6d6;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
 }
 
-.logo:hover{
-    cursor: pointer;
+.logo-icon {
+    background-color: #614638;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.logo-text {
+    font-size: 1.25rem;
+    color: #1A1A1A;
 }
 
 .nav-links {
     display: flex;
-    gap: 2rem;
-    align-items: center;
+    gap: 32px;
 }
 
-.nav-link {
+.nav-links a {
+    text-decoration: none;
+    color: #1A1A1A;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-links a:hover {
+    color: #614638;
+}
+
+.nav-actions {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    color: #333;
-    font-weight: 500;
-    transition: color 0.3s;
+    gap: 20px;
 }
 
-.nav-link:hover {
-    color: #22a6d6;
-}
-
-/* User Menu */
 .user-menu {
     position: relative;
 }
 
-.dropdown-menu {
-    position: absolute;
-    top: calc(100% + 1rem);
-    right: 0;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    min-width: 200px;
-    overflow: hidden;
-    animation: slideDown 0.2s ease;
+.user-icon-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #1A1A1A;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 10px 22px;
+    border-radius: 50px;
+    background-color: #F7F5F2;
+    border: 1px solid rgba(97, 70, 56, 0.12);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.nav-icon {
+    stroke-width: 2.25px;
+    color: #433427;
+}
+
+.user-icon-link:hover {
+    background-color: #EFEDE8;
+    border-color: rgba(97, 70, 56, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(97, 70, 56, 0.08);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    min-width: 220px;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .dropdown-header {
-    padding: 1rem 1.25rem;
-    font-weight: 600;
-    color: #333;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 0.95rem;
+    padding: 18px 20px 12px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #8A7A6A;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid #F0ECE7;
+    font-family: 'Inter', sans-serif;
 }
 
 .dropdown-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.875rem 1.25rem;
-    color: #333;
+    gap: 12px;
+    padding: 14px 20px;
+    color: #433427;
     text-decoration: none;
-    transition: background 0.2s;
     font-size: 0.95rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+}
+
+.dropdown-item svg {
+    stroke-width: 2px;
+    opacity: 0.7;
+    transition: all 0.2s;
 }
 
 .dropdown-item:hover {
-    background: #f5f7fa;
+    background-color: #F7F5F2;
+    color: #614638;
 }
 
-.dropdown-item.logout {
-    color: #e74c3c;
-    font-weight: 500;
-}
-
-.dropdown-item.logout:hover {
-    background: #ffebee;
+.dropdown-item:hover svg {
+    opacity: 1;
+    transform: scale(1.05);
 }
 
 .dropdown-divider {
     height: 1px;
-    background: #f0f0f0;
-    margin: 0.5rem 0;
+    background-color: #F0ECE7;
+    margin: 4px 0;
 }
 
-/* Hamburger Menu Button */
+.dropdown-item.logout {
+    color: #E74C3C;
+}
+
+.dropdown-item.logout:hover {
+    background-color: #FFF5F5;
+}
+
+/* Mobile styles */
 .hamburger {
     display: none;
     flex-direction: column;
-    justify-content: space-around;
-    width: 28px;
-    height: 24px;
+    justify-content: space-between;
+    width: 24px;
+    height: 18px;
     background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
-    z-index: 110;
+    z-index: 1100;
 }
 
 .hamburger-line {
     width: 100%;
-    height: 3px;
-    background: #333;
+    height: 2px;
+    background-color: #1A1A1A;
     border-radius: 2px;
-    transition: all 0.3s ease;
+    transition: 0.3s;
 }
 
 .hamburger.active .hamburger-line:nth-child(1) {
-    transform: rotate(45deg) translate(6px, 6px);
+    transform: translateY(8px) rotate(45deg);
 }
 
 .hamburger.active .hamburger-line:nth-child(2) {
@@ -275,179 +345,84 @@ const logout = () => {
 }
 
 .hamburger.active .hamburger-line:nth-child(3) {
-    transform: rotate(-45deg) translate(6px, -6px);
+    transform: translateY(-8px) rotate(-45deg);
 }
 
-/* Mobile Overlay */
 .mobile-overlay {
-    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    backdrop-filter: blur(4px);
+    z-index: 1050;
 }
 
-/* Mobile Only Text */
-.mobile-only {
-    display: none;
+.mobile-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100vh;
+    background: #FCFBF7;
+    z-index: 1100;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s ease-out;
 }
 
-/* ==================== RESPONSIVE STYLES ==================== */
-
-/* Tablet (1024px) */
-@media (max-width: 1024px) {
-    .nav-content {
-        padding: 1rem 1.5rem;
-    }
-    
-    .nav-links {
-        gap: 1.5rem;
-    }
+.mobile-drawer.open {
+    transform: translateX(0);
 }
 
-/* Tablet Portrait (768px) */
+.drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.close-btn {
+    font-size: 2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.drawer-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.drawer-link {
+    text-decoration: none;
+    color: #1A1A1A;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.drawer-divider {
+    height: 1px;
+    background-color: rgba(0,0,0,0.05);
+    margin: 8px 0;
+}
+
+.drawer-link.logout {
+    color: #E74C3C;
+}
+
 @media (max-width: 768px) {
+    .nav-links, .nav-actions .user-label {
+        display: none;
+    }
+    
     .hamburger {
         display: flex;
     }
-    
-    .nav-content {
-        padding: 0.875rem 1rem;
-    }
-    
-    .logo {
-        font-size: 1.25rem;
-    }
-    
-    .nav-links {
-        position: fixed;
-        top: 0;
-        right: 0;
-        width: 280px;
-        height: 100vh;
-        background: white;
-        flex-direction: column;
-        padding: 80px 24px 24px;
-        gap: 0;
-        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
-        transition: transform 0.3s ease;
-        z-index: 105;
-        align-items: stretch;
-        transform: translateX(100%);
-        visibility: hidden;
-    }
-    
-    .nav-links.mobile-open {
-        transform: translateX(0);
-        visibility: visible;
-    }
-    
-    .nav-link {
-        padding: 16px 0;
-        border-bottom: 1px solid #f0f0f0;
-        font-size: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-    
-    .nav-link img {
-        flex-shrink: 0;
-        width: 24px;
-        height: 24px;
-    }
-    
-    .nav-link:last-child {
-        border-bottom: none;
-    }
-    
-    .mobile-only {
-        display: inline;
-    }
-    
-    .user-menu {
-        width: 100%;
-    }
-    
-    .user-menu .nav-link {
-        width: 100%;
-        justify-content: flex-start;
-    }
-    
-    .dropdown-menu {
-        position: static;
-        box-shadow: none;
-        border: 1px solid #e5e7eb;
-        margin-top: 8px;
-        animation: none;
-    }
-    
-    .mobile-overlay {
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 100;
-    }
-}
 
-/* Mobile (640px) */
-@media (max-width: 640px) {
-    .nav-content {
-        padding: 0.75rem 1rem;
-    }
-    
-    .logo {
-        font-size: 1.125rem;
-    }
-    
-    .nav-links {
-        width: 100%;
-        transform: translateX(100%);
-        padding: 70px 20px 20px;
-    }
-    
-    .nav-links.mobile-open {
-        transform: translateX(0);
-    }
-    
-    .nav-link {
-        padding: 14px 0;
-        font-size: 0.95rem;
-    }
-    
-    .dropdown-header {
-        padding: 0.875rem 1rem;
-        font-size: 0.9rem;
-    }
-    
-    .dropdown-item {
-        padding: 0.75rem 1rem;
-        font-size: 0.9rem;
-    }
-}
-
-/* Small Mobile (480px) */
-@media (max-width: 480px) {
-    .hamburger {
-        width: 24px;
-        height: 20px;
-    }
-    
-    .hamburger-line {
-        height: 2px;
-    }
-    
-    .hamburger.active .hamburger-line:nth-child(1) {
-        transform: rotate(45deg) translate(5px, 5px);
-    }
-    
-    .hamburger.active .hamburger-line:nth-child(3) {
-        transform: rotate(-45deg) translate(5px, -5px);
-    }
-    
-    .nav-link img {
-        width: 22px;
-        height: 22px;
+    .header-container {
+        padding: 0 16px;
     }
 }
 </style>

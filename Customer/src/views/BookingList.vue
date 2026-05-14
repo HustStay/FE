@@ -3,80 +3,72 @@
     <Navbar />
     
     <div class="bookings-container">
-      <div class="header">
-        <h1 class="title">Đặt phòng của tôi</h1>
-        <p class="subtitle">Quản lý và xem lại các đặt phòng của bạn</p>
+      <div class="page-header">
+        <div class="breadcrumb">Hồ sơ của tôi</div>
+        <div class="header-row">
+          <div>
+            <h1 class="title">Đặt phòng của tôi</h1>
+            <p class="subtitle">Theo dõi mọi chuyến đi từ một nơi duy nhất.</p>
+          </div>
+          <button class="btn-new-booking">Đặt chuyến mới</button>
+        </div>
       </div>
 
       <div class="tabs">
-        <button 
-          class="tab" 
-          :class="{ active: activeTab === 'upcoming' }"
-          @click="activeTab = 'upcoming'"
-        >
-          <img width="20" height="20" src="https://img.icons8.com/windows/32/calendar-minus.png" alt="calendar"/>
-          Sắp đến
-        </button>
-        <button 
-          class="tab" 
-          :class="{ active: activeTab === 'completed' }"
-          @click="activeTab = 'completed'"
-        >
-          <img width="20" height="20" src="https://img.icons8.com/windows/32/checkmark.png" alt="completed"/>
-          Đã hoàn thành
-        </button>
-        <button 
-          class="tab" 
-          :class="{ active: activeTab === 'cancelled' }"
-          @click="activeTab = 'cancelled'"
-        >
-          <img width="20" height="20" src="https://img.icons8.com/windows/32/cancel.png" alt="cancelled"/>
-          Đã hủy
-        </button>
+        <button class="tab" :class="{ active: activeTab === 'upcoming' }" @click="activeTab = 'upcoming'">Sắp tới</button>
+        <button class="tab" :class="{ active: activeTab === 'completed' }" @click="activeTab = 'completed'">Đã hoàn tất</button>
+        <button class="tab" :class="{ active: activeTab === 'cancelled' }" @click="activeTab = 'cancelled'">Đã huỷ</button>
       </div>
 
       <div class="bookings-list">
-        <div v-if="loading" class="loading">Đang tải...</div>
+        <div v-if="loading" class="loading"><p>Đang tải...</p></div>
         
         <div v-else-if="filteredBookings.length === 0" class="empty-state">
-          <p>Không có đặt phòng nào</p>
+          <div class="empty-icon">🏨</div>
+          <h3>Không có đặt phòng nào</h3>
+          <p>Bạn chưa có đặt phòng nào trong mục này.</p>
         </div>
 
         <div v-else class="booking-cards">
-          <div 
-            v-for="booking in filteredBookings" 
-            :key="booking.id"
-            class="booking-card"
-          >
-            <div class="badge" :class="getStatusClass(booking.status)">
-              {{ getStatusText(booking.status) }}
+          <div v-for="booking in filteredBookings" :key="booking.id" class="booking-card">
+            <div class="card-image-wrap">
+              <div class="card-badge" :class="getStatusClass(booking.status)">{{ getStatusText(booking.status) }}</div>
+              <img :src="booking.hotelImage" :alt="booking.hotelName" class="card-img" />
             </div>
             
-            <div class="card-image">
-              <img :src="booking.hotelImage" :alt="booking.hotelName" />
-            </div>
-            
-            <div class="card-content">
+            <div class="card-body">
               <h3 class="hotel-name">{{ booking.hotelName }}</h3>
-              
               <div class="info-row">
-                <img width="16" height="16" src="https://img.icons8.com/windows/32/marker.png" alt="location"/>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                 <span>{{ booking.location }}</span>
               </div>
-              
-              <div class="info-row">
-                <img width="16" height="16" src="https://img.icons8.com/windows/32/calendar.png" alt="calendar"/>
-                <span>{{ formatDate(booking.checkInDate) }} - {{ formatDate(booking.checkOutDate) }}</span>
+              <div class="date-strip">
+                <div class="date-item">
+                  <div class="date-label">Nhận phòng</div>
+                  <div class="date-val">{{ formatDate(booking.checkInDate) }}</div>
+                </div>
+                <div class="date-arrow">→</div>
+                <div class="date-item">
+                  <div class="date-label">Trả phòng</div>
+                  <div class="date-val">{{ formatDate(booking.checkOutDate) }}</div>
+                </div>
+                <div class="date-item">
+                  <div class="date-label">Khách</div>
+                  <div class="date-val">{{ booking.guests }} người</div>
+                </div>
               </div>
-              
-              <div class="info-row">
-                <img width="16" height="16" src="https://img.icons8.com/windows/32/user.png" alt="guests"/>
-                <span>{{ booking.guests }} khách</span>
-              </div>
-              
-              <div class="card-actions">
-                <button class="btn-secondary" @click="showBookingDetail(booking)">Chi tiết</button>
-              </div>
+            </div>
+
+            <div class="card-side">
+              <div class="total-label">Tổng tiền</div>
+              <div class="total-amount">{{ booking.totalAmount ? booking.totalAmount.toLocaleString('vi-VN') + 'đ' : '—' }}</div>
+              <button class="btn-detail" @click="showBookingDetail(booking)">Chi tiết →</button>
+              <button 
+                v-if="booking.status === 'CONFIRMED' || booking.status === 'PENDING'"
+                class="btn-cancel-inline"
+                :disabled="!canCancelBooking(booking)"
+                @click="cancelBooking(booking)"
+              >Huỷ đặt phòng</button>
             </div>
           </div>
         </div>
@@ -87,54 +79,35 @@
     <div v-if="selectedBooking" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
         <button class="modal-close" @click="closeModal">×</button>
-        
         <h2 class="modal-title">{{ selectedBooking.hotelName }}</h2>
-        
         <div class="modal-image">
           <img :src="selectedBooking.hotelImage || 'https://via.placeholder.com/500x300'" :alt="selectedBooking.hotelName" />
-          <div class="modal-badge" :class="getStatusClass(selectedBooking.status)">
-            {{ getStatusText(selectedBooking.status) }}
-          </div>
+          <div class="modal-badge" :class="getStatusClass(selectedBooking.status)">{{ getStatusText(selectedBooking.status) }}</div>
         </div>
-        
         <div class="modal-details">
           <div class="detail-row">
-            <div class="detail-label">
-              <img width="20" height="20" src="https://img.icons8.com/windows/32/marker.png" alt="location"/>
-              Địa điểm
-            </div>
+            <div class="detail-label">Địa điểm</div>
             <div class="detail-value">{{ selectedBooking.location }}</div>
           </div>
-          
           <div class="detail-row">
-            <div class="detail-label">
-              <img width="20" height="20" src="https://img.icons8.com/windows/32/calendar.png" alt="calendar"/>
-              Thời gian
-            </div>
+            <div class="detail-label">Thời gian</div>
             <div class="detail-value">
               <div>Nhận phòng: {{ formatDate(selectedBooking.checkInDate) }}</div>
               <div>Trả phòng: {{ formatDate(selectedBooking.checkOutDate) }}</div>
             </div>
           </div>
-          
           <div class="detail-row">
-            <div class="detail-label">
-              <img width="20" height="20" src="https://img.icons8.com/windows/32/user.png" alt="guests"/>
-              Số khách
-            </div>
+            <div class="detail-label">Số khách</div>
             <div class="detail-value">{{ selectedBooking.guests }} khách</div>
           </div>
         </div>
-        
         <div class="modal-actions">
           <button 
-            v-if="selectedBooking.status === 'CONFIRMED'"
+            v-if="selectedBooking.status === 'CONFIRMED' || selectedBooking.status === 'PENDING'"
             class="btn-cancel" 
             :disabled="!canCancelBooking(selectedBooking)"
             @click="cancelBooking(selectedBooking)"
-          >
-            {{ canCancelBooking(selectedBooking) ? 'Hủy đặt phòng' : 'Không thể hủy (< 7 ngày)' }}
-          </button>
+          >{{ canCancelBooking(selectedBooking) ? 'Hủy đặt phòng' : 'Không thể hủy (< 7 ngày)' }}</button>
         </div>
       </div>
     </div>
@@ -148,7 +121,7 @@ import Navbar from '@/components/Navbar.vue'
 import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
-const activeTab = ref('upcoming')
+const activeTab = ref('all')
 const bookings = ref([])
 const loading = ref(false)
 const selectedBooking = ref(null)
@@ -229,7 +202,9 @@ const filteredBookings = computed(() => {
   console.log(' All bookings:', bookings.value)
 
   const filtered = bookings.value.filter(booking => {
-    if (activeTab.value === 'upcoming') {
+    if (activeTab.value === 'all') {
+      return true
+    } else if (activeTab.value === 'upcoming') {
       return booking.status === 'CONFIRMED' || booking.status === 'PENDING'
     } else if (activeTab.value === 'completed') {
       return booking.status === 'COMPLETED' || booking.status === 'CHECKED_IN'
@@ -340,429 +315,157 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 .bookings-page {
+  font-family: 'Inter', sans-serif;
   min-height: 100vh;
-  background: #f5f7fa;
+  background: #FCFBF7;
+  color: #1A1A1A;
 }
-
 .bookings-container {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 100px 24px 48px;
+  padding: 100px 24px 80px;
 }
 
-.header {
-  margin-bottom: 32px;
+/* Page Header */
+.page-header { margin-bottom: 36px; }
+.breadcrumb { font-size: 0.8rem; color: #888; margin-bottom: 8px; }
+.header-row { display: flex; align-items: flex-start; justify-content: space-between; }
+.title { font-size: 2rem; font-weight: 700; margin: 0 0 6px 0; }
+.subtitle { font-size: 0.9rem; color: #614638; margin: 0; }
+.btn-new-booking {
+  background: #614638; color: white; border: none;
+  padding: 12px 24px; border-radius: 50px; font-size: 0.9rem; font-weight: 600;
+  cursor: pointer; transition: opacity 0.2s;
 }
+.btn-new-booking:hover { opacity: 0.85; }
 
-.title {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 8px 0;
-}
-
-.subtitle {
-  font-size: 16px;
-  color: #666;
-  margin: 0;
-}
-
-.tabs {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0;
-}
-
+/* Tabs */
+.tabs { display: flex; margin-bottom: 32px; border-bottom: 1px solid #E5E5E5; }
 .tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: transparent;
-  border: none;
-  border-bottom: 3px solid transparent;
-  font-size: 15px;
-  font-weight: 500;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: -1px;
+  padding: 12px 24px; background: transparent; border: none;
+  border-bottom: 2px solid transparent; font-size: 0.95rem; font-weight: 500;
+  color: #888; cursor: pointer; transition: all 0.2s; margin-bottom: -1px;
 }
+.tab:hover { color: #1A1A1A; }
+.tab.active { color: #1A1A1A; font-weight: 700; border-bottom-color: #614638; }
 
-.tab:hover {
-  color: #1a1a1a;
-  background: #f9fafb;
-}
+/* Loading / Empty */
+.loading { text-align: center; padding: 64px; color: #888; }
+.empty-state { text-align: center; padding: 80px 24px; background: white; border-radius: 20px; }
+.empty-icon { font-size: 3rem; margin-bottom: 16px; }
+.empty-state h3 { font-size: 1.2rem; margin: 0 0 8px; }
+.empty-state p { color: #888; margin: 0; }
 
-.tab.active {
-  color: #1a1a1a;
-  border-bottom-color: #22a6d6;
-}
-
-.tab img {
-  filter: grayscale(100%);
-  opacity: 0.6;
-}
-
-.tab.active img {
-  filter: none;
-  opacity: 1;
-}
-
-.loading {
-  text-align: center;
-  padding: 48px;
-  font-size: 16px;
-  color: #666;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 64px 24px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.empty-state p {
-  font-size: 16px;
-  color: #666;
-  margin: 0;
-}
-
-.booking-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
-  gap: 15px;
-}
-
+/* Cards */
+.booking-cards { display: flex; flex-direction: column; gap: 16px; }
 .booking-card {
-  position: relative;
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex; align-items: stretch; background: white;
+  border-radius: 20px; overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  border: 1px solid #E5E5E5; transition: box-shadow 0.2s;
 }
+.booking-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.09); }
 
-.booking-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+/* Image */
+.card-image-wrap { position: relative; width: 220px; flex-shrink: 0; }
+.card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-badge {
+  position: absolute; top: 12px; left: 12px;
+  padding: 4px 12px; border-radius: 50px;
+  font-size: 0.75rem; font-weight: 600;
 }
+.status-upcoming { background: rgba(97,70,56,0.85); color: white; }
+.status-completed { background: rgba(16,185,129,0.85); color: white; }
+.status-cancelled { background: rgba(239,68,68,0.85); color: white; }
 
-.badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  z-index: 10;
-  backdrop-filter: blur(8px);
+/* Body */
+.card-body { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 10px; }
+.hotel-name { font-size: 1.2rem; font-weight: 700; margin: 0; }
+.info-row { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #666; }
+.info-row svg { color: #888; flex-shrink: 0; }
+
+.date-strip {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 8px; background: #F7F5F2; border-radius: 12px; padding: 12px 16px;
 }
+.date-item { display: flex; flex-direction: column; gap: 2px; }
+.date-label { font-size: 0.72rem; color: #888; font-weight: 500; }
+.date-val { font-size: 0.9rem; font-weight: 600; color: #1A1A1A; }
+.date-arrow { color: #aaa; font-size: 1rem; padding: 0 4px; }
 
-.status-upcoming {
-  background: rgba(34, 166, 214, 0.9);
-  color: white;
+/* Side panel */
+.card-side {
+  width: 200px; flex-shrink: 0;
+  padding: 24px 20px; display: flex; flex-direction: column;
+  align-items: flex-end; justify-content: center; gap: 10px;
+  border-left: 1px solid #F0EDE9;
 }
-
-.status-completed {
-  background: rgba(16, 185, 129, 0.9);
-  color: white;
+.total-label { font-size: 0.75rem; color: #888; }
+.total-amount { font-size: 1.3rem; font-weight: 700; color: #614638; text-align: right; }
+.btn-detail {
+  background: #614638; color: white; border: none;
+  padding: 10px 18px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; width: 100%; text-align: center; transition: opacity 0.2s;
 }
-
-.status-cancelled {
-  background: rgba(239, 68, 68, 0.9);
-  color: white;
+.btn-detail:hover { opacity: 0.85; }
+.btn-cancel-inline {
+  background: transparent; color: #888; border: 1px solid #E5E5E5;
+  padding: 8px 18px; border-radius: 50px; font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; width: 100%; text-align: center; transition: all 0.2s;
 }
+.btn-cancel-inline:hover:not(:disabled) { border-color: #c62828; color: #c62828; }
+.btn-cancel-inline:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.card-image {
-  width: 100%;
-  height: 220px;
-  overflow: hidden;
-}
-
-.card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s;
-}
-
-.booking-card:hover .card-image img {
-  transform: scale(1.05);
-}
-
-.card-content {
-  padding: 20px;
-}
-
-.hotel-name {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 16px 0;
-}
-
-.info-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  font-size: 14px;
-  color: #666;
-}
-
-.info-row img {
-  opacity: 0.6;
-}
-
-.card-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.btn-secondary {
-  flex: 1;
-  padding: 10px 20px;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
-}
-
-.btn-primary {
-  flex: 1;
-  padding: 10px 20px;
-  background: #22a6d6;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary:hover {
-  background: #1d8bb8;
-}
-
-@media (max-width: 768px) {
-  .bookings-container {
-    padding: 80px 16px 32px;
-  }
-
-  .title {
-    font-size: 24px;
-  }
-
-  .booking-cards {
-    grid-template-columns: 1fr;
-  }
-
-  .tabs {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .tab {
-    white-space: nowrap;
-  }
-}
-
-/* Modal Styles */
+/* Modal */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
 }
-
 .modal-content {
-  background: white;
-  border-radius: 16px;
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  background: white; border-radius: 20px; max-width: 560px; width: 100%;
+  max-height: 90vh; overflow-y: auto; position: relative;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
 }
-
 .modal-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 50%;
-  font-size: 24px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666;
-  z-index: 10;
-  transition: all 0.2s;
+  position: absolute; top: 16px; right: 16px; width: 36px; height: 36px;
+  border: none; background: #F7F5F2; border-radius: 50%; font-size: 20px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;
 }
-
-.modal-close:hover {
-  background: rgba(0, 0, 0, 0.2);
-  color: #333;
-}
-
-.modal-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1a1a1a;
-  padding: 24px 24px 16px;
-  margin: 0;
-}
-
-.modal-image {
-  position: relative;
-  width: 100%;
-  height: 300px;
-  overflow: hidden;
-}
-
-.modal-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
+.modal-title { font-size: 1.4rem; font-weight: 700; padding: 24px 24px 12px; margin: 0; }
+.modal-image { position: relative; width: 100%; height: 260px; overflow: hidden; }
+.modal-image img { width: 100%; height: 100%; object-fit: cover; }
 .modal-badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 8px 20px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  backdrop-filter: blur(8px);
+  position: absolute; top: 14px; right: 14px;
+  padding: 6px 16px; border-radius: 50px; font-size: 0.8rem; font-weight: 600;
 }
-
-.modal-details {
-  padding: 24px;
-}
-
+.modal-details { padding: 20px 24px; }
 .detail-row {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #f0f0f0;
+  display: flex; gap: 16px; margin-bottom: 16px;
+  padding-bottom: 16px; border-bottom: 1px solid #F0EDE9;
 }
-
-.detail-row:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-  padding-bottom: 0;
-}
-
-.detail-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: #333;
-  min-width: 120px;
-  font-size: 15px;
-}
-
-.detail-label img {
-  opacity: 0.7;
-}
-
-.detail-value {
-  flex: 1;
-  color: #666;
-  font-size: 15px;
-}
-
-.detail-value div {
-  margin-bottom: 4px;
-}
-
-.detail-value div:last-child {
-  margin-bottom: 0;
-}
-
-.modal-actions {
-  padding: 0 24px 24px;
-  display: flex;
-  gap: 12px;
-}
-
+.detail-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.detail-label { font-weight: 600; color: #444; min-width: 100px; font-size: 0.9rem; }
+.detail-value { flex: 1; color: #666; font-size: 0.9rem; }
+.detail-value div { margin-bottom: 4px; }
+.modal-actions { padding: 0 24px 24px; }
 .btn-cancel {
-  flex: 1;
-  padding: 14px 24px;
-  background: #ef4444;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  color: white;
-  cursor: pointer;
-  transition: all 0.2s;
+  width: 100%; padding: 14px; background: #ef4444; border: none;
+  border-radius: 12px; font-size: 0.95rem; font-weight: 600;
+  color: white; cursor: pointer; transition: background 0.2s;
 }
-
-.btn-cancel:hover:not(:disabled) {
-  background: #dc2626;
-}
-
-.btn-cancel:disabled {
-  background: #e0e0e0;
-  color: #999;
-  cursor: not-allowed;
-}
+.btn-cancel:hover:not(:disabled) { background: #dc2626; }
+.btn-cancel:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; }
 
 @media (max-width: 768px) {
-  .modal-content {
-    max-width: 100%;
-    margin: 0;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-
-  .modal-image {
-    height: 220px;
-  }
-
-  .detail-row {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .detail-label {
-    min-width: auto;
-  }
+  .booking-card { flex-direction: column; }
+  .card-image-wrap { width: 100%; height: 200px; }
+  .card-side { width: 100%; align-items: stretch; border-left: none; border-top: 1px solid #F0EDE9; }
+  .total-amount { text-align: left; }
+  .header-row { flex-direction: column; gap: 16px; }
+  .date-strip { flex-wrap: wrap; }
 }
 </style>

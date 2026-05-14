@@ -6,6 +6,7 @@ import BookingListView from '../views/BookingListView.vue'
 import CommentListView from '../views/CommentListView.vue'
 import ChatView from '../views/ChatView.vue'
 import StaffManagementView from '../views/StaffManagementView.vue'
+import HotelProfileView from '../views/HotelProfileView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,11 @@ const router = createRouter({
       path: '/staff',
       name: 'staff',
       component: StaffManagementView
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: HotelProfileView
     }
   ],
 })
