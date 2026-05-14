@@ -250,7 +250,7 @@
             </div>
 
             <button class="book-action-btn" @click="bookNow" :disabled="selectedRooms.length === 0">
-              {{ selectedRooms.length === 0 ? 'Chọn phòng để đặt' : 'Đặt phòng ngay' }}
+              {{ selectedRooms.length === 0 ? 'Chọn phòng để đặt' : 'Thanh toán ngay' }}
             </button>
             <div class="cancel-note">Miễn phí hủy trước 48 giờ - Chưa thanh toán</div>
 
@@ -748,14 +748,22 @@ const bookNow = async () => {
           bookingId: createdBookingId,
           amount: paymentResult.amount ?? Math.round(finalAmount),
           orderCode: paymentResult.sessionId,
-          checkoutUrl: paymentResult.sessionUrl
+          checkoutUrl: paymentResult.sessionUrl,
+          hotelName: hotel.value.hotelName,
+          hotelImage: selectedImage.value || (images.value[0] || ''),
+          location: [hotel.value.street, hotel.value.district, hotel.value.city, hotel.value.country].filter(Boolean).join(', '),
+          checkInDate: booking.value.checkIn,
+          checkOutDate: booking.value.checkOut,
+          guests: booking.value.guests,
+          nights,
+          roomSubtotal: Math.round(finalAmount),
+          taxFee: 0,
+          serviceFee: 0,
+          totalAmount: paymentResult.amount ?? Math.round(finalAmount)
         }))
 
-        // Step 3: Open internal checkout page to render QR from PayOS checkout URL
-        router.push({
-          path: '/payment/checkout',
-          query: { orderCode: paymentResult.sessionId }
-        })
+        // Step 3: Go directly to PayOS checkout page
+        window.location.assign(paymentResult.sessionUrl)
       } else {
         console.error('❌ Payment session creation failed:', paymentResult)
         const backendMessage = paymentResult?.message ? `\nChi tiết: ${paymentResult.message}` : ''

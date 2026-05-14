@@ -139,7 +139,7 @@
                 </div>
 
                 <div v-else class="hotel-grid">
-                    <div v-for="hotel in searchResults" :key="hotel.id" class="hotel-card">
+                    <div v-for="hotel in searchResults" :key="hotel.id" class="hotel-card" @click.prevent="goToHotelDetail(hotel.id)">
                         <div class="card-img-wrapper">
                             <img :src="hotel.image" :alt="hotel.name" />
                             <span class="card-rating">★ {{ hotel.rating }}</span>
@@ -154,9 +154,9 @@
                             <div v-if="hotel.totalRooms" class="hotel-meta">
                                 Tổng {{ hotel.totalRooms }} phòng
                             </div>
-                            <div class="card-actions">
+                            <!-- <div class="card-actions">
                                 <button class="btn-detail" @click.prevent="goToHotelDetail(hotel.id)">Xem chi tiết</button>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                 </div>
@@ -180,19 +180,20 @@
                         </svg>
                     </button>
                 </div>
-                <div class="hotel-grid">
+                <div class="hotel-grid" >
                     <div
                         v-for="(hotel, index) in paginatedFeaturedHotels"
                         :key="hotel.id"
                         class="hotel-card"
                         :class="getFeaturedCardClass(index)"
+                        @click.prevent="goToHotelDetail(hotel.id)"
                     >
                         <div class="card-img-wrapper">
                             <img :src="hotel.image" :alt="hotel.name" />
                             <span class="card-badge">Nổi bật</span>
                             <span class="card-rating">★ {{ hotel.rating }}</span>
                         </div>
-                        <div class="card-info" @click.prevent="goToHotelDetail(hotel.id)">
+                        <div class="card-info" >
                             <p class="hotel-location">{{ hotel.location }}</p>
                             <h3 class="hotel-name">{{ hotel.name }}</h3>
                             <div class="hotel-meta">{{ hotel.reviewCount|| 0}} đánh giá</div>
@@ -766,7 +767,9 @@ const goToHotelDetail = (hotelId) => {
     grid-template-columns: repeat(4, 1fr);
     grid-auto-rows: auto;
     gap: 24px;
+    cursor: pointer;
 }
+
 
 .hotel-card {
     background: white;
