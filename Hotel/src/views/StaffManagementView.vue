@@ -102,7 +102,7 @@
           <table class="staff-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <!-- <th>ID</th> -->
                 <th>Username</th>
                 <th>Họ tên</th>
                 <th>Email</th>
@@ -123,7 +123,7 @@
                 </td>
               </tr>
               <tr v-for="account in filteredAccounts" :key="account.id">
-                <td class="id-cell">#{{ account.id }}</td>
+                <!-- <td class="id-cell">#{{ account.id }}</td> -->
                 <td>
                   <div class="user-info">
                     <div class="user-avatar">{{ getInitials(account.fullName) }}</div>

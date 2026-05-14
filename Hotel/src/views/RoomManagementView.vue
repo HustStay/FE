@@ -45,7 +45,7 @@
         <div v-for="(rooms, roomType) in roomsGroupedByType" :key="roomType" class="room-type-section">
           <div class="room-type-header">
             <div class="room-type-title">
-              <span :class="['room-type-icon', getRoomTypeClass(roomType)]">
+              <span :class="[getRoomTypeClass(roomType)]">
                 <svg v-if="roomType === 'Standard'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/>
                 </svg>
@@ -73,30 +73,31 @@
                 <span class="stat-value">{{ getStatusCount(rooms, 'occupied') }}</span>
                 <span class="stat-label">Đang sử dụng</span>
               </div>
-              <div class="stat-item cleaning">
+              <!-- <div class="stat-item cleaning">
                 <span class="stat-value">{{ getStatusCount(rooms, 'cleaning') }}</span>
                 <span class="stat-label">Đang dọn</span>
               </div>
               <div class="stat-item maintenance">
                 <span class="stat-value">{{ getStatusCount(rooms, 'maintenance') }}</span>
                 <span class="stat-label">Bảo trì</span>
-              </div>
+              </div> -->
             </div>
           </div>
           
           <div class="rooms-grid">
             <div v-for="room in rooms" :key="room.id" class="room-card">
-              <div class="room-image-container">
-                <img :src="room.image" :alt="room.name" class="room-image" />
-                <span :class="['room-status-badge', room.status]">
-                  {{ getStatusText(room.status) }}
-                </span>
-                <span v-if="!room.isActive" class="room-inactive-badge">Vô hiệu hóa</span>
-              </div>
               <div class="room-content">
-                <div class="room-header">
-                  <h3 class="room-name">{{ room.name }}</h3>
-                  <span class="room-floor">{{ room.floor }}</span>
+                <div class="room-top-row">
+                  <div class="room-header">
+                    <h3 class="room-name">{{ room.name }}</h3>
+                    <span class="room-floor">{{ room.floor }}</span>
+                  </div>
+                  <div class="room-badges">
+                    <span v-if="!room.isActive" class="room-inactive-badge">Vô hiệu hóa</span>
+                    <span :class="['room-status-badge', room.status]">
+                      {{ getStatusText(room.status) }}
+                    </span>
+                  </div>
                 </div>
                 <div class="room-details">
                   <div class="room-detail-item">
@@ -227,13 +228,14 @@
           </div>
 
           <div class="form-group full-width">
-            <label for="roomAmenities">Tiện nghi (phân cách bằng dấu phẩy)</label>
-            <input
-              id="roomAmenities"
-              v-model="newRoom.amenitiesText"
-              type="text"
-              placeholder="WiFi, TV, Điều hòa, Minibar"
-            />
+            <label>Tiện nghi (chọn từ danh sách của khách sạn)</label>
+            <div class="amenities-checkbox-group">
+              <label v-for="amenity in availableHotelAmenities" :key="amenity" class="amenity-checkbox">
+                <input type="checkbox" :value="amenity" v-model="newRoom.amenitiesArray" />
+                {{ amenity }}
+              </label>
+              <span v-if="availableHotelAmenities.length === 0" class="no-amenities">Khách sạn chưa có tiện nghi nào. Vui lòng thêm trong Hồ sơ khách sạn.</span>
+            </div>
           </div>
 
           <div class="form-group full-width">
@@ -262,7 +264,7 @@
     <div v-if="showEditModal" class="modal-overlay" @click="showEditModal = false">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
-          <h2>Sửa thông tin phòng</h2>
+          <h2>Sửa thông tin phòng {{ editRoom.number }}</h2>
           <button class="close-button" @click="showEditModal = false">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -303,6 +305,17 @@
                 placeholder="2"
                 required
               />
+            </div>
+          </div>
+
+          <div class="form-group full-width">
+            <label>Tiện nghi (chọn từ danh sách của khách sạn)</label>
+            <div class="amenities-checkbox-group">
+              <label v-for="amenity in availableHotelAmenities" :key="amenity" class="amenity-checkbox">
+                <input type="checkbox" :value="amenity" v-model="editRoom.amenities" />
+                {{ amenity }}
+              </label>
+              <span v-if="availableHotelAmenities.length === 0" class="no-amenities">Khách sạn chưa có tiện nghi nào. Vui lòng thêm trong Hồ sơ khách sạn.</span>
             </div>
           </div>
 
@@ -349,19 +362,46 @@ const newRoom = ref({
   price: 0,
   capacity: 2,
   floor: '1',
-  amenitiesText: 'WiFi, TV, Điều hòa',
+  amenitiesArray: [],
   description: ''
 })
 
 const editRoom = ref({
   id: null,
+  number: '',
   type: '',
   price: 0,
   capacity: 0,
-  description: ''
+  description: '',
+  amenities: []
 })
 
 const rooms = ref([])
+const availableHotelAmenities = ref([])
+
+const fetchHotelAmenities = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const hotelId = localStorage.getItem('hotelId')
+    if (!hotelId) return;
+
+    const response = await apiFetch('/api/hotel-service/hotel-profile', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      params: { hotelId }
+    })
+    
+    if (response.ok) {
+      const data = await response.json()
+      if (data.hotelProfile && data.hotelProfile.aminities) {
+        availableHotelAmenities.value = data.hotelProfile.aminities
+      }
+    }
+  } catch (error) {
+    console.error('Fetch hotel amenities error:', error)
+  }
+}
 
 // Fetch rooms from API
 const fetchRooms = async () => {
@@ -417,6 +457,7 @@ const fetchRooms = async () => {
 // Call API when component mounts
 onMounted(() => {
   fetchRooms()
+  fetchHotelAmenities()
 })
 
 const filteredRooms = computed(() => {
@@ -485,15 +526,36 @@ const getStatusText = (status) => {
   return statusMap[status] || status
 }
 
-const openEditModal = (room) => {
-  editRoom.value = {
-    id: room.id,
-    type: '',
-    price: room.price,
-    capacity: room.capacity,
-    description: room.description || ''
+const openEditModal = async (room) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await apiFetch(`/api/room-service/room-detail?roomId=${room.id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data.roomDetail) {
+        editRoom.value = {
+          id: data.roomDetail.roomId,
+          number: data.roomDetail.roomNumber,
+          type: data.roomDetail.roomType,
+          price: data.roomDetail.pricePerNight,
+          capacity: data.roomDetail.capacity,
+          description: data.roomDetail.description || '',
+          amenities: data.roomDetail.amenities ? data.roomDetail.amenities.split(', ').filter(a => a) : []
+        };
+        showEditModal.value = true;
+      }
+    } else {
+      alert("Không thể lấy chi tiết phòng");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Có lỗi xảy ra khi lấy chi tiết phòng");
   }
-  showEditModal.value = true
 }
 
 const handleUpdateRoom = async () => {
@@ -504,7 +566,8 @@ const handleUpdateRoom = async () => {
       roomType: editRoom.value.type || null,
       roomPrice: editRoom.value.price,
       roomCapacity: editRoom.value.capacity,
-      roomDescription: editRoom.value.description || null
+      roomDescription: editRoom.value.description || null,
+      amenities: editRoom.value.amenities
     }
 
     const response = await apiFetch('/api/room-service/room/update', {
@@ -590,19 +653,14 @@ const handleToggleActive = async (room) => {
 
 const handleAddRoom = async () => {
   try {
-    const amenitiesArray = newRoom.value.amenitiesText
-      .split(',')
-      .map(item => item.trim())
-      .filter(item => item.length > 0)
-
     const requestBody = {
-      hotelId: 1,
+      hotelId: parseInt(localStorage.getItem('hotelId') || '1'),
       roomNumber: newRoom.value.number,
       roomType: newRoom.value.type,
       price: newRoom.value.price,
       capacity: newRoom.value.capacity,
       description: newRoom.value.description,
-      amenities: amenitiesArray
+      amenities: newRoom.value.amenitiesArray
     }
 
     const token = localStorage.getItem('token')
@@ -637,7 +695,7 @@ const handleAddRoom = async () => {
           floor: `Tầng ${newRoom.value.floor}`,
           price: newRoom.value.price,
           image: 'https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=500',
-          amenities: amenitiesArray,
+          amenities: newRoom.value.amenitiesArray,
           description: newRoom.value.description
         }
         rooms.value.push(room)
@@ -652,7 +710,7 @@ const handleAddRoom = async () => {
           price: 0,
           capacity: 2,
           floor: '1',
-          amenitiesText: 'WiFi, TV, Điều hòa',
+          amenitiesArray: [],
           description: ''
         }
 
@@ -823,41 +881,6 @@ const handleAddRoom = async () => {
   gap: 16px;
 }
 
-.room-type-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.room-type-icon svg {
-  width: 24px;
-  height: 24px;
-  color: white;
-}
-
-.room-type-icon.standard {
-  background: linear-gradient(135deg, #64748b, #475569);
-}
-
-.room-type-icon.deluxe {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-}
-
-.room-type-icon.suite {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-
-.room-type-icon.family {
-  background: linear-gradient(135deg, #10b981, #059669);
-}
-
-.room-type-icon.other {
-  background: linear-gradient(135deg, #94a3b8, #64748b);
-}
-
 .room-type-title h2 {
   font-size: 22px;
   font-weight: 700;
@@ -980,23 +1003,27 @@ const handleAddRoom = async () => {
   transform: translateY(-2px);
 }
 
-.room-image-container {
-  position: relative;
-  width: 100%;
-  height: 120px;
-  overflow: hidden;
+.room-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.room-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.room-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.room-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
 }
 
 .room-status-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 11px;
@@ -1021,26 +1048,18 @@ const handleAddRoom = async () => {
 }
 
 .room-inactive-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
   padding: 3px 8px;
   border-radius: 10px;
   font-size: 10px;
   font-weight: 600;
   color: white;
-  background: rgba(0, 0, 0, 0.7);
-}
-
-.room-content {
-  padding: 12px;
+  background: #64748b;
 }
 
 .room-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .room-name {
@@ -1060,7 +1079,6 @@ const handleAddRoom = async () => {
 .room-details {
   display: flex;
   gap: 12px;
-  margin-bottom: 8px;
 }
 
 .room-detail-item {
@@ -1342,6 +1360,36 @@ const handleAddRoom = async () => {
   background: #2563eb;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.amenities-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.amenity-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.amenity-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.no-amenities {
+  font-size: 13px;
+  color: #ef4444;
+  font-style: italic;
 }
 
 /* Responsive */

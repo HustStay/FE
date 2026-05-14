@@ -3,160 +3,115 @@
         <Navbar />
 
         <div class="profile-content">
-            <!-- Profile Header Card -->
-            <div class="profile-header-card">
-                <div class="avatar-section">
-                    <div class="avatar-wrapper">
-                        <img src="https://img.icons8.com/color/96/000000/user-female-circle--v1.png" alt="Avatar"
-                            class="avatar">
+            <div class="profile-header">
+                <div class="profile-identity">
+                    <div class="avatar-circle">{{ userInitials }}</div>
+                    <div>
+                        <h1 class="user-name">{{ userProfile.fullName || 'Tài khoản của bạn' }}</h1>
+                        <p class="user-meta-line">
+                            <span class="user-badge">Thành viên</span>
+                            <span class="dot">·</span>
+                            <span>Tham gia {{ userProfile.created || '--' }}</span>
+                        </p>
                     </div>
                 </div>
-                <div class="user-info">
-                    <h1 class="user-name">{{ userProfile.fullName }}</h1>
-                    <p class="user-email">{{ userProfile.email }}</p>
-                    <div class="user-meta">
-                        <span class="meta-item">
-                            <img width="20" height="20" src="https://img.icons8.com/windows/32/calendar-minus.png"
-                                alt="calendar-minus" />
-                            Tham gia từ {{ userProfile.created }}
-                        </span>
-                        <span class="meta-item">
-                            <img width="20" height="20" src="https://img.icons8.com/windows/32/marker.png"
-                                alt="marker" />
-                            {{ userProfile.address }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabs -->
-            <div class="tabs-container">
-                <button :class="['tab-btn', { active: activeTab === 'info' }]" @click="activeTab = 'info'">
-                    Thông tin cá nhân
-                </button>
-                <button :class="['tab-btn', { active: activeTab === 'security' }]" @click="activeTab = 'security'">
-                    Bảo mật
+                <button class="edit-profile-btn" type="button">
+                    Chỉnh sửa hồ sơ
                 </button>
             </div>
 
-            <!-- Tab Content -->
-            <div class="tab-content">
-                <!-- Personal Info Tab -->
-                <div v-if="activeTab === 'info'" class="info-section">
-                    <div class="section-header">
-                        <h2 class="section-title">Thông tin cá nhân</h2>
-                        <p class="section-subtitle">Cập nhật thông tin cá nhân của bạn</p>
-                    </div>
+            <div class="profile-grid">
+                <section class="profile-card">
+                    <div class="card-header">Thông tin cá nhân</div>
+                    <p class="card-subtitle">Cập nhật thông tin liên hệ của bạn.</p>
 
-                    <button class="edit-btn">Chỉnh sửa</button>
-
-                    <div class="form-grid">
-                        <div class="form-group full-width">
-                            <label class="form-label">
-                                <img width="20" height="20"
-                                    src="https://img.icons8.com/windows/32/gender-neutral-user.png"
-                                    alt="gender-neutral-user" />
-                                Họ và tên
-                            </label>
-                            <input type="text" class="form-input" v-model="userProfile.fullName"
-                                placeholder="Nguyễn Văn A">
+                    <div class="info-grid">
+                        <div class="form-group">
+                            <label class="form-label">Họ</label>
+                            <input type="text" class="form-input" v-model="lastName" placeholder="Nguyễn" />
                         </div>
-
-                        <div class="form-group full-width">
-                            <label class="form-label">
-                                <img width="20" height="20"
-                                    src="https://img.icons8.com/windows/32/secured-letter--v1.png"
-                                    alt="secured-letter--v1" />
-                                Email
-                            </label>
+                        <div class="form-group">
+                            <label class="form-label">Tên</label>
+                            <input type="text" class="form-input" v-model="firstName" placeholder="Minh Anh" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
                             <input type="email" class="form-input" v-model="userProfile.email"
-                                placeholder="nguyenvana@email.com">
+                                placeholder="minhanh@email.com" />
                         </div>
-
                         <div class="form-group">
-                            <label class="form-label">
-                                <img width="20" height="20" src="https://img.icons8.com/windows/32/smartphone--v1.png"
-                                    alt="smartphone--v1" />
-                                Số điện thoại
-                            </label>
-                            <input type="tel" class="form-input" v-model="userProfile.phone" placeholder="0901234567">
+                            <label class="form-label">Số điện thoại</label>
+                            <input type="tel" class="form-input" v-model="userProfile.phone" placeholder="0901234567" />
                         </div>
-
-                        <div class="form-group">
-                            <label class="form-label">
-                                <img width="20" height="20" src="https://img.icons8.com/windows/32/gift.png"
-                                    alt="gift" />
-                                Ngày sinh
-                            </label>
-                            <input type="date" class="form-input" v-model="userProfile.birth">
-                        </div>
-
                         <div class="form-group full-width">
-                            <label class="form-label">
-                                <img width="20" height="20" src="https://img.icons8.com/windows/32/marker.png"
-                                    alt="marker" />
-                                Địa chỉ
-                            </label>
+                            <label class="form-label">Địa chỉ</label>
                             <input type="text" class="form-input" v-model="userProfile.address"
-                                placeholder="Hà Nội, Việt Nam">
+                                placeholder="123 Nguyễn Huệ, Quận 1, TP. Hồ Chí Minh" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Ngày sinh</label>
+                            <input type="date" class="form-input" v-model="userProfile.birth" />
                         </div>
                     </div>
-                </div>
 
-                <!-- Security Tab -->
-                <div v-if="activeTab === 'security'" class="security-section">
-                    <div class="section-header">
-                        <h2 class="section-title">Bảo mật</h2>
-                        <p class="section-subtitle">Quản lý mật khẩu và cài đặt bảo mật</p>
+                    <div class="card-actions">
+                        <button class="btn-secondary" type="button">Hủy</button>
+                        <button class="btn-primary" type="button">Lưu thay đổi</button>
                     </div>
+                </section>
 
-                    <div class="form-container">
-                        <div class="form-group">
-                            <label class="form-label">
-                                <img width="20" height="20" src="https://img.icons8.com/windows/32/lock.png"
-                                    alt="lock" />
-                                Mật khẩu hiện tại
-                            </label>
-                            <input type="password" class="form-input" v-model="passwordForm.oldPassword"
-                                placeholder="Nhập mật khẩu hiện tại">
+                <aside class="profile-side">
+                    <section class="side-card security-card">
+                        <div class="security-header">
+                            <div class="security-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2-1 4-2 7-2 2.82 0 5.39.95 7 2a1 1 0 0 1 1 1z" />
+                                    <path d="m9 12 2 2 4-4" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="security-title">Bảo mật</h3>
+                                <p class="security-text">Mật khẩu cập nhật lần cuối 2 tháng trước.</p>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">
-                                <img width="20" height="20" src="https://img.icons8.com/windows/32/lock.png"
-                                    alt="lock" />
-                                Mật khẩu mới
-                            </label>
-                            <input type="password" class="form-input" v-model="passwordForm.newPassword"
-                                placeholder="Nhập mật khẩu mới">
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">
-                                <img width="20" height="20" src="https://img.icons8.com/windows/32/lock.png"
-                                    alt="lock" />
-                                Xác nhận mật khẩu mới
-                            </label>
-                            <input type="password" class="form-input" v-model="passwordForm.confirmPassword"
-                                placeholder="Nhập lại mật khẩu mới">
-                        </div>
-
-                        <button class="submit-btn" @click="changePassword">
+                        <button class="outline-btn" type="button" @click="showPasswordForm = !showPasswordForm">
                             Đổi mật khẩu
                         </button>
-                    </div>
-                </div>
+
+                        <div v-if="showPasswordForm" class="password-form">
+                            <div class="form-group">
+                                <label class="form-label">Mật khẩu hiện tại</label>
+                                <input type="password" class="form-input" v-model="passwordForm.oldPassword"
+                                    placeholder="Nhập mật khẩu hiện tại" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Mật khẩu mới</label>
+                                <input type="password" class="form-input" v-model="passwordForm.newPassword"
+                                    placeholder="Nhập mật khẩu mới" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Xác nhận mật khẩu mới</label>
+                                <input type="password" class="form-input" v-model="passwordForm.confirmPassword"
+                                    placeholder="Nhập lại mật khẩu mới" />
+                            </div>
+                            <button class="btn-primary" type="button" @click="changePassword">
+                                Cập nhật mật khẩu
+                            </button>
+                        </div>
+                    </section>
+                </aside>
             </div>
         </div>
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Navbar from '@/components/Navbar.vue'
 import { apiFetch } from '../utils/apiClient.js'
-
-const activeTab = ref('info')
 
 const userProfile = ref({
     email: '',
@@ -167,10 +122,51 @@ const userProfile = ref({
     created: ''
 })
 
+const showPasswordForm = ref(false)
+
 const passwordForm = ref({
     oldPassword: '',
     newPassword: '',
     confirmPassword: ''
+})
+
+const getNameParts = () => {
+    return userProfile.value.fullName.trim().split(/\s+/).filter(Boolean)
+}
+
+const lastName = computed({
+    get: () => {
+        const parts = getNameParts()
+        if (parts.length <= 1) {
+            return ''
+        }
+        return parts.slice(0, -1).join(' ')
+    },
+    set: (value) => {
+        const parts = getNameParts()
+        const first = parts.length ? parts[parts.length - 1] : ''
+        userProfile.value.fullName = [value, first].filter(Boolean).join(' ').trim()
+    }
+})
+
+const firstName = computed({
+    get: () => {
+        const parts = getNameParts()
+        return parts.length ? parts[parts.length - 1] : ''
+    },
+    set: (value) => {
+        const parts = getNameParts()
+        const last = parts.slice(0, -1).join(' ')
+        userProfile.value.fullName = [last, value].filter(Boolean).join(' ').trim()
+    }
+})
+
+const userInitials = computed(() => {
+    const parts = getNameParts()
+    if (!parts.length) {
+        return 'NA'
+    }
+    return parts.slice(-2).map(part => part[0]).join('').toUpperCase()
 })
 
 const formatDate = (dateString) => {
@@ -263,196 +259,126 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 .profile-container {
     min-height: 100vh;
-    background: #f5f7fa;
+    background: #FBF7F2;
+    font-family: 'Inter', sans-serif;
+    color: #3a2a20;
 }
 
 .profile-content {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 6rem 2rem 3rem;
+    padding: 6.5rem 1.5rem 3rem;
 }
 
-/* Profile Header Card */
-.profile-header-card {
-    background: white;
-    border-radius: 16px;
-    padding: 2.5rem;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+.profile-header {
     display: flex;
-    gap: 2rem;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
     margin-bottom: 2rem;
 }
 
-.avatar-section {
-    flex-shrink: 0;
+.profile-identity {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
-.avatar-wrapper {
-    position: relative;
-    width: 120px;
-    height: 120px;
-}
-
-.avatar {
-    width: 100%;
-    height: 100%;
+.avatar-circle {
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
-    object-fit: cover;
-}
-
-.avatar-edit-btn {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: white;
-    border: 2px solid #22a6d6;
-    cursor: pointer;
+    background: #6b4a3a;
+    color: white;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    transition: all 0.3s;
-}
-
-.avatar-edit-btn:hover {
-    background: #22a6d6;
-    transform: scale(1.05);
-}
-
-.user-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    font-size: 1.1rem;
 }
 
 .user-name {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
-    color: #333;
-    margin-bottom: 0.5px;
+    margin-bottom: 0.25rem;
 }
 
-.user-email {
-    color: #666;
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-}
-
-.user-meta {
-    display: flex;
-    gap: 2rem;
-}
-
-.meta-item {
+.user-meta-line {
+    color: #8c7b70;
+    font-size: 0.95rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #666;
-    font-size: 0.95rem;
+    flex-wrap: wrap;
 }
 
-/* Tabs */
-.tabs-container {
-    display: flex;
-    gap: 1rem;
-    border-bottom: 2px solid #e0e0e0;
-    margin-bottom: 2rem;
-}
-
-.tab-btn {
-    padding: 1rem 2rem;
-    background: none;
-    border: none;
-    color: #666;
-    font-size: 1rem;
+.user-badge {
     font-weight: 600;
-    cursor: pointer;
-    position: relative;
-    transition: color 0.3s;
+    color: #6b4a3a;
 }
 
-.tab-btn:hover {
-    color: #22a6d6;
+.dot {
+    color: #c4b6ad;
 }
 
-.tab-btn.active {
-    color: #22a6d6;
-}
-
-.tab-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #22a6d6;
-}
-
-/* Tab Content */
-.tab-content {
+.edit-profile-btn {
+    border: 1px solid #e2d3c8;
     background: white;
-    border-radius: 16px;
-    padding: 2.5rem;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-
-.section-header {
-    margin-bottom: 2rem;
-}
-
-.section-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #333;
-    margin-bottom: 0.5rem;
-}
-
-.section-subtitle {
-    color: #666;
-    font-size: 0.95rem;
-}
-
-/* Info Section */
-.info-section {
-    position: relative;
-}
-
-.edit-btn {
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 0.75rem 1.5rem;
-    background: #22a6d6;
-    color: white;
-    border: none;
-    border-radius: 8px;
+    color: #3a2a20;
+    border-radius: 999px;
+    padding: 0.6rem 1.2rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
 }
 
-.edit-btn:hover {
-    background: #1a8bb5;
-    transform: translateY(-2px);
+.edit-profile-btn:hover {
+    border-color: #6b4a3a;
+    color: #6b4a3a;
 }
 
-.form-grid {
+.profile-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr);
     gap: 1.5rem;
+    align-items: start;
+}
+
+.profile-card,
+.side-card {
+    background: #FFF9F4;
+    border: 1px solid #eee2d8;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.card-subtitle {
+    color: #8c7b70;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    margin-top: 5px;
+    gap: 0.5rem;
 }
 
 .form-group.full-width {
@@ -460,247 +386,149 @@ onMounted(() => {
 }
 
 .form-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-    color: #333;
+    font-size: 0.85rem;
     font-weight: 600;
-    font-size: 0.95rem;
+    color: #6d5b50;
 }
 
 .form-input {
-    padding: 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.3s;
-    background: #f9f9f9;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e7dacf;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    background: white;
+    transition: all 0.2s;
 }
 
 .form-input:focus {
     outline: none;
-    border-color: #22a6d6;
+    border-color: #6b4a3a;
+    box-shadow: 0 0 0 3px rgba(107, 74, 58, 0.12);
+}
+
+.card-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.btn-secondary {
+    border: 1px solid #e2d3c8;
     background: white;
-}
-
-.form-input::placeholder {
-    color: #999;
-}
-
-/* Security Section */
-.security-section {
-    position: relative;
-}
-
-.form-container {
-    max-width: 600px;
-}
-
-.submit-btn {
-    width: 100%;
-    padding: 1rem 2rem;
-    background: #22a6d6;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
+    color: #6d5b50;
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
     font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    border-color: #6b4a3a;
+    color: #6b4a3a;
+}
+
+.btn-primary {
+    border: none;
+    background: #6b4a3a;
+    color: white;
+    padding: 0.6rem 1.2rem;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    background: #543628;
+}
+
+.security-header {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.security-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    background: #F2E6DC;
+    color: #6b4a3a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.security-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.security-text {
+    color: #8c7b70;
+    font-size: 0.85rem;
+}
+
+.outline-btn {
+    width: 100%;
+    border: 1px solid #e2d3c8;
+    background: white;
+    color: #3a2a20;
+    border-radius: 999px;
+    padding: 0.65rem 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.outline-btn:hover {
+    border-color: #6b4a3a;
+    color: #6b4a3a;
+}
+
+.password-form {
     margin-top: 1rem;
-    transition: all 0.3s;
+    display: grid;
+    gap: 0.75rem;
 }
 
-.submit-btn:hover {
-    background: #1a8bb5;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(34, 166, 214, 0.3);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .profile-header-card {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .user-meta {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .form-grid {
+@media (max-width: 1024px) {
+    .profile-grid {
         grid-template-columns: 1fr;
     }
-
-    .form-group.full-width {
-        grid-column: 1;
-    }
-
-    .edit-btn {
-        position: static;
-        width: 100%;
-        margin-bottom: 1.5rem;
-    }
-
-    .tabs-container {
-        overflow-x: auto;
-    }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
     .profile-content {
-        padding: 5rem 1rem 2rem;
+        padding: 6rem 1rem 2.5rem;
     }
-    
-    .profile-header-card {
-        padding: 1.5rem;
-        border-radius: 12px;
-    }
-    
-    .avatar-wrapper {
-        width: 100px;
-        height: 100px;
-    }
-    
-    .user-name {
-        font-size: 1.5rem;
-    }
-    
-    .user-email {
-        font-size: 1rem;
-    }
-    
-    .meta-item {
-        font-size: 0.875rem;
-    }
-    
-    .tabs-container {
-        gap: 0.5rem;
-    }
-    
-    .tab-btn {
-        padding: 0.75rem 1rem;
-        font-size: 0.9rem;
-        white-space: nowrap;
-    }
-    
-    .tab-content {
-        padding: 1.5rem;
-        border-radius: 12px;
-    }
-    
-    .section-title {
-        font-size: 1.25rem;
-    }
-    
-    .section-subtitle {
-        font-size: 0.875rem;
-    }
-    
-    .form-label {
-        font-size: 0.875rem;
-    }
-    
-    .form-input {
-        padding: 0.875rem;
-        font-size: 0.95rem;
-    }
-    
-    .submit-btn {
-        padding: 0.875rem 1.5rem;
-        font-size: 1rem;
+
+    .info-grid {
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 480px) {
     .profile-content {
-        padding: 4.5rem 0.75rem 1.5rem;
+        padding: 5.5rem 0.75rem 2rem;
     }
-    
-    .profile-header-card {
-        padding: 1.25rem;
-        margin-bottom: 1.5rem;
+
+    .avatar-circle {
+        width: 56px;
+        height: 56px;
     }
-    
-    .avatar-wrapper {
-        width: 80px;
-        height: 80px;
-    }
-    
+
     .user-name {
-        font-size: 1.25rem;
-    }
-    
-    .user-email {
-        font-size: 0.9rem;
-        margin-bottom: 0.75rem;
-    }
-    
-    .user-meta {
-        gap: 0.375rem;
-    }
-    
-    .meta-item {
-        font-size: 0.8rem;
-    }
-    
-    .meta-item img {
-        width: 16px;
-        height: 16px;
-    }
-    
-    .tabs-container {
-        margin-bottom: 1.5rem;
-    }
-    
-    .tab-btn {
-        padding: 0.625rem 0.875rem;
-        font-size: 0.85rem;
-    }
-    
-    .tab-content {
-        padding: 1.25rem;
-    }
-    
-    .section-header {
-        margin-bottom: 1.5rem;
-    }
-    
-    .section-title {
-        font-size: 1.125rem;
-    }
-    
-    .form-group {
-        margin-top: 0;
-        margin-bottom: 1rem;
-    }
-    
-    .form-label {
-        font-size: 0.8rem;
-        margin-bottom: 0.5rem;
-    }
-    
-    .form-label img {
-        width: 16px;
-        height: 16px;
-    }
-    
-    .form-input {
-        padding: 0.75rem;
-        font-size: 0.9rem;
-    }
-    
-    .edit-btn {
-        padding: 0.625rem 1rem;
-        font-size: 0.9rem;
-        margin-bottom: 1.25rem;
-    }
-    
-    .submit-btn {
-        padding: 0.75rem 1.25rem;
-        font-size: 0.95rem;
+        font-size: 1.5rem;
     }
 }
 </style>

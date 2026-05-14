@@ -1,18 +1,21 @@
 <template>
   <div class="ai-chat-container">
-    <!-- AI Chat Toggle Button -->
+    <!-- AI Chat Toggle Button (Always visible) -->
     <button
-      v-if="!isOpen"
-      @click="openChat"
+      @click="isOpen ? closeChat() : openChat()"
       class="ai-chat-btn"
-      title="Chat với AI trợ lý"
+      :class="{ 'is-open': isOpen }"
+      :title="isOpen ? 'Đóng chat' : 'Mở chat với AI'"
     >
-      <div class="ai-btn-glow"></div>
-      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-        <path d="M8 10h8M8 14h5" stroke-linecap="round"/>
+      <!-- Chat bubble icon (shown when closed) -->
+      <svg v-if="!isOpen" xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
       </svg>
-      <span class="ai-btn-label">AI</span>
+      <!-- Close icon (shown when open) -->
+      <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
     </button>
 
     <!-- AI Chat Window -->
@@ -22,41 +25,26 @@
         <div class="ai-chat-header">
           <div class="ai-header-left">
             <div class="ai-avatar">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="8" r="4"/>
                 <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-                <path d="M17 6l1.5-1.5M7 6L5.5 4.5M12 3V1.5" stroke-linecap="round"/>
               </svg>
               <span class="ai-online-dot"></span>
             </div>
             <div class="ai-header-info">
-              <h3>HustStay AI</h3>
+              <h3>Sandy — Trợ lý du lịch</h3>
               <span class="ai-status">
-                <span class="status-dot" :class="{ thinking: isThinking }"></span>
-                {{ isThinking ? 'Đang suy nghĩ...' : 'Trợ lý thông minh' }}
+                <span class="status-dot"></span>
+                Đang trực tuyến · Phản hồi tức thì
               </span>
             </div>
           </div>
-          <div class="ai-header-actions">
-            <button @click="clearConversation" class="ai-action-btn" title="Xóa cuộc trò chuyện">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
-                <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
-              </svg>
-            </button>
-            <button @click="closeChat" class="ai-action-btn" title="Đóng">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
         </div>
 
-        <!-- Quick Suggestions (shown when empty) -->
+        <!-- Messages Area -->
         <div v-if="messages.length === 0" class="ai-welcome">
-          <div class="welcome-icon">🤖</div>
-          <h4>Xin chào! Tôi có thể giúp gì cho bạn?</h4>
-          <p>Hỏi tôi về khách sạn, phòng, tiện ích và dịch vụ.</p>
+          <h4>Xin chào! Mình là Sandy ✨ — trợ lý du lịch của Sandstay</h4>
+          <p>Mình có thể giúp bạn tìm khách sạn, kiếm tra ưu đãi hay giải đáp về đặt phòng. Bạn cần gì hôm nay?</p>
           <div class="quick-suggestions">
             <button
               v-for="s in suggestions"
@@ -77,21 +65,37 @@
             :class="['ai-message', msg.role]"
           >
             <div v-if="msg.role === 'assistant'" class="msg-avatar">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
               </svg>
             </div>
             <div class="msg-bubble">
               <div class="msg-text" v-html="formatMessage(msg.content)"></div>
-              <span class="msg-time">{{ formatTime(msg.timestamp) }}</span>
+            </div>
+          </div>
+
+          <!-- Quick suggestions after assistant message -->
+          <div v-if="messages.length > 0 && messages[messages.length - 1].role === 'assistant'" class="quick-suggestions-area">
+            <p class="suggestions-label">Gợi ý nhanh</p>
+            <div class="quick-suggestions">
+              <button
+                v-for="s in suggestions"
+                :key="s"
+                @click="sendSuggestion(s)"
+                class="suggestion-chip"
+              >
+                {{ s }}
+              </button>
             </div>
           </div>
 
           <!-- Thinking indicator -->
           <div v-if="isThinking" class="ai-message assistant thinking-msg">
             <div class="msg-avatar">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
               </svg>
             </div>
             <div class="msg-bubble">
@@ -120,22 +124,20 @@
               @keydown.enter.shift.exact="newLine"
               @input="autoResize"
               ref="inputRef"
-              placeholder="Hỏi về khách sạn, phòng, tiện ích..."
+              placeholder="Nhập tin nhắn..."
               rows="1"
-              :disabled="isThinking"
+              :disabled="isThinking || isStreaming"
             ></textarea>
             <button
               @click="sendMessage"
               class="ai-send-btn"
-              :disabled="!inputText.trim() || isThinking"
+              :disabled="!inputText.trim() || isThinking || isStreaming"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="22" y1="2" x2="11" y2="13"/>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16507265 C3.34915502,0.9 2.40734225,1.00636533 1.77946707,1.4776575 C0.994623095,2.10604706 0.837654326,3.0486314 1.15159189,3.99521575 L3.03521743,10.4362088 C3.03521743,10.5933061 3.19218622,10.7504035 3.50612381,10.7504035 L16.6915026,11.5358905 C16.6915026,11.5358905 17.1624089,11.5358905 17.1624089,12.0071827 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
               </svg>
             </button>
           </div>
-          <p class="ai-input-hint">Enter gửi · Shift+Enter xuống dòng</p>
         </div>
       </div>
     </Transition>
@@ -143,10 +145,12 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, nextTick } from 'vue'
 
 // ── Configuration ──────────────────────────────────────────────────
-const AI_API_URL = import.meta.env.VITE_AI_CHAT_URL || 'http://localhost:8000/api/v1/chat'
+// Strip any old /api/v1/chat suffix from env var and always use streaming endpoint
+const _rawBase = import.meta.env.VITE_AI_CHAT_URL || 'http://localhost:8000'
+const AI_STREAM_URL = _rawBase.replace(/\/api\/v1\/chat(\/stream)?$/, '') + '/api/v1/chat/stream'
 
 // Generate a unique session ID per browser tab (persisted in sessionStorage)
 const getSessionId = () => {
@@ -160,7 +164,8 @@ const getSessionId = () => {
 
 // ── State ──────────────────────────────────────────────────────────
 const isOpen = ref(false)
-const isThinking = ref(false)
+const isThinking = ref(false)   // typing-dots while waiting for first chunk
+const isStreaming = ref(false)  // true while SSE chunks are arriving
 const inputText = ref('')
 const messages = ref([])
 const errorMessage = ref('')
@@ -169,10 +174,10 @@ const inputRef = ref(null)
 const sessionId = ref(getSessionId())
 
 const suggestions = [
-  'Khách sạn nào có hồ bơi?',
-  'Tiện ích phòng Superior là gì?',
-  'Phòng nào phù hợp cho gia đình?',
-  'So sánh các loại phòng'
+  'Gợi ý khách sạn ở Đà Nẵng',
+  'Resort cho gia đình tại Phú Quốc',
+  'Khách sạn có bể bơi',
+  'Tiện ích phòng Superior là gì?'
 ]
 
 // ── Actions ────────────────────────────────────────────────────────
@@ -204,7 +209,7 @@ const sendSuggestion = (text) => {
 
 const sendMessage = async () => {
   const text = inputText.value.trim()
-  if (!text || isThinking.value) return
+  if (!text || isThinking.value || isStreaming.value) return
 
   // Add user message
   messages.value.push({
@@ -219,14 +224,13 @@ const sendMessage = async () => {
   await nextTick()
   scrollToBottom()
 
-  // Call AI API
+  // Show typing indicator while waiting for the first chunk
   isThinking.value = true
+
   try {
-    const response = await fetch(AI_API_URL, {
+    const response = await fetch(AI_STREAM_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message: text,
         session_id: sessionId.value
@@ -237,26 +241,69 @@ const sendMessage = async () => {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
 
-    const data = await response.json()
-    const reply = data.reply || data.message || 'Xin lỗi, tôi không nhận được phản hồi.'
+    // Hide typing dots, create an empty assistant bubble to fill incrementally
+    isThinking.value = false
+    isStreaming.value = true
 
-    messages.value.push({
+    const assistantMsg = {
       role: 'assistant',
-      content: reply,
+      content: '',
       timestamp: new Date()
-    })
+    }
+    messages.value.push(assistantMsg)
 
-    // Sync session id from server if returned
-    if (data.session_id) {
-      sessionId.value = data.session_id
-      sessionStorage.setItem('ai_chat_session_id', data.session_id)
+    // Read the SSE stream
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder('utf-8')
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+
+      // SSE lines are separated by double newline
+      const parts = buffer.split('\n\n')
+      buffer = parts.pop() // keep incomplete last part
+
+      for (const part of parts) {
+        const line = part.trim()
+        if (!line.startsWith('data:')) continue
+
+        const jsonStr = line.slice(5).trim()
+        try {
+          const payload = JSON.parse(jsonStr)
+
+          if (payload.error) {
+            errorMessage.value = payload.error
+            break
+          }
+
+          if (payload.chunk) {
+            assistantMsg.content += payload.chunk
+            // Trigger Vue reactivity on the array item
+            messages.value = [...messages.value]
+            await nextTick()
+            scrollToBottom()
+          }
+
+          if (payload.done) {
+            // Stream finished
+            break
+          }
+        } catch (parseErr) {
+          console.warn('[AI Chat] JSON parse error:', parseErr, jsonStr)
+        }
+      }
     }
   } catch (err) {
-    console.error('[AI Chat] Error:', err)
+    isThinking.value = false
+    console.error('[AI Chat] Stream error:', err)
     errorMessage.value = 'Không thể kết nối đến AI. Vui lòng thử lại sau.'
-    // Remove the user message that failed so they can retry
   } finally {
     isThinking.value = false
+    isStreaming.value = false
     await nextTick()
     scrollToBottom()
     inputRef.value?.focus()
@@ -311,69 +358,55 @@ const newLine = () => {
 /* ── Container ──────────────────────────────────────────────── */
 .ai-chat-container {
   position: fixed;
-  bottom: 96px; /* sit above the hotel chat button */
+  bottom: 80px;
   right: 20px;
   z-index: 1100;
   font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 0;
 }
 
 /* ── Toggle Button ──────────────────────────────────────────── */
 .ai-chat-btn {
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   border: none;
   cursor: pointer;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  background: #6b4a3a;
   color: #fff;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.45);
+  box-shadow: 0 4px 16px rgba(107, 74, 58, 0.3);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
   position: relative;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .ai-chat-btn:hover {
   transform: scale(1.1);
-  box-shadow: 0 8px 28px rgba(124, 58, 237, 0.6);
+  box-shadow: 0 6px 20px rgba(107, 74, 58, 0.4);
 }
 
-.ai-btn-glow {
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #a78bfa, #818cf8, #7c3aed);
-  opacity: 0;
-  animation: glow-pulse 2.5s ease-in-out infinite;
-  z-index: -1;
-}
-
-@keyframes glow-pulse {
-  0%, 100% { opacity: 0; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(1.15); }
-}
-
-.ai-btn-label {
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
+.ai-chat-btn.is-open {
+  background: #6b4a3a;
 }
 
 /* ── Window ─────────────────────────────────────────────────── */
 .ai-chat-window {
   width: 390px;
-  height: 560px;
-  background: #0f0f1a;
+  max-height: 600px;
+  background: #FBF7F2;
   border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(124,58,237,0.3);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   transform-origin: bottom right;
+  margin-bottom: 12px;
 }
 
 /* ── Transition ─────────────────────────────────────────────── */
@@ -389,12 +422,12 @@ const newLine = () => {
 
 /* ── Header ─────────────────────────────────────────────────── */
 .ai-chat-header {
-  background: linear-gradient(135deg, #1a0a3d, #2d1b69);
+  background: #FFF9F4;
   padding: 1rem 1.1rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(124,58,237,0.25);
+  border-bottom: 1px solid #E8DCD2;
   flex-shrink: 0;
 }
 
@@ -405,10 +438,10 @@ const newLine = () => {
 }
 
 .ai-avatar {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  background: #6b4a3a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -419,20 +452,20 @@ const newLine = () => {
 
 .ai-online-dot {
   position: absolute;
-  bottom: 1px;
-  right: 1px;
-  width: 10px;
-  height: 10px;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
   background: #10b981;
   border-radius: 50%;
-  border: 2px solid #1a0a3d;
+  border: 2px solid #FFF9F4;
 }
 
 .ai-header-info h3 {
   margin: 0;
   font-size: 0.95rem;
-  font-weight: 700;
-  color: #f0e8ff;
+  font-weight: 600;
+  color: #3d2817;
   letter-spacing: 0.01em;
 }
 
@@ -441,7 +474,7 @@ const newLine = () => {
   align-items: center;
   gap: 5px;
   font-size: 0.72rem;
-  color: #a78bfa;
+  color: #8B6F47;
 }
 
 .status-dot {
@@ -450,16 +483,6 @@ const newLine = () => {
   border-radius: 50%;
   background: #10b981;
   transition: background 0.3s;
-}
-
-.status-dot.thinking {
-  background: #f59e0b;
-  animation: blink 0.8s ease-in-out infinite;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
 }
 
 .ai-header-actions {
@@ -472,8 +495,8 @@ const newLine = () => {
   height: 30px;
   border-radius: 8px;
   border: none;
-  background: rgba(255,255,255,0.07);
-  color: #c4b5fd;
+  background: #EBE0D8;
+  color: #6b4a3a;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -482,8 +505,8 @@ const newLine = () => {
 }
 
 .ai-action-btn:hover {
-  background: rgba(255,255,255,0.14);
-  color: #fff;
+  background: #DDD0C8;
+  color: #3d2817;
 }
 
 /* ── Welcome Screen ─────────────────────────────────────────── */
@@ -493,43 +516,38 @@ const newLine = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem 1.5rem 0.5rem;
+  padding: 2rem 1.5rem 1.5rem;
   text-align: center;
-  gap: 0.4rem;
-}
-
-.welcome-icon {
-  font-size: 2.8rem;
-  margin-bottom: 0.3rem;
+  gap: 0.6rem;
 }
 
 .ai-welcome h4 {
   margin: 0;
   font-size: 1rem;
-  font-weight: 700;
-  color: #e9d5ff;
+  font-weight: 600;
+  color: #3d2817;
 }
 
 .ai-welcome p {
   margin: 0;
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #8B6F47;
 }
 
 .quick-suggestions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.6rem;
   justify-content: center;
   margin-top: 1rem;
 }
 
 .suggestion-chip {
-  background: rgba(124,58,237,0.15);
-  border: 1px solid rgba(124,58,237,0.35);
-  color: #c4b5fd;
+  background: #FFF9F4;
+  border: 1px solid #D4C4B0;
+  color: #6b4a3a;
   border-radius: 20px;
-  padding: 0.4rem 0.9rem;
+  padding: 0.5rem 0.95rem;
   font-size: 0.75rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -537,9 +555,9 @@ const newLine = () => {
 }
 
 .suggestion-chip:hover {
-  background: rgba(124,58,237,0.3);
-  border-color: #7c3aed;
-  color: #fff;
+  background: #EBE0D8;
+  border-color: #B09880;
+  color: #3d2817;
   transform: translateY(-1px);
 }
 
@@ -561,14 +579,14 @@ const newLine = () => {
   background: transparent;
 }
 .ai-messages::-webkit-scrollbar-thumb {
-  background: rgba(124,58,237,0.3);
+  background: #D4C4B0;
   border-radius: 4px;
 }
 
 .ai-message {
   display: flex;
   align-items: flex-end;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .ai-message.user {
@@ -579,7 +597,7 @@ const newLine = () => {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  background: #6b4a3a;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -599,7 +617,7 @@ const newLine = () => {
 }
 
 .msg-text {
-  padding: 0.6rem 0.9rem;
+  padding: 0.7rem 0.95rem;
   border-radius: 16px;
   font-size: 0.84rem;
   line-height: 1.55;
@@ -607,22 +625,16 @@ const newLine = () => {
 }
 
 .ai-message.user .msg-text {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  color: #fff;
+  background: #EBE0D8;
+  color: #3d2817;
   border-bottom-right-radius: 4px;
 }
 
 .ai-message.assistant .msg-text {
-  background: #1e1b2e;
-  color: #e2e8f0;
+  background: #FFF9F4;
+  color: #3d2817;
   border-bottom-left-radius: 4px;
-  border: 1px solid rgba(124,58,237,0.2);
-}
-
-.msg-time {
-  font-size: 0.68rem;
-  color: #6b7280;
-  padding: 0 0.2rem;
+  border: 1px solid #E8DCD2;
 }
 
 /* ── Typing dots ────────────────────────────────────────────── */
@@ -631,17 +643,17 @@ const newLine = () => {
   align-items: center;
   gap: 4px;
   padding: 0.75rem 1rem;
-  background: #1e1b2e;
+  background: #FFF9F4;
   border-radius: 16px;
   border-bottom-left-radius: 4px;
-  border: 1px solid rgba(124,58,237,0.2);
+  border: 1px solid #E8DCD2;
 }
 
 .typing-dots span {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #7c3aed;
+  background: #6b4a3a;
   animation: bounce-dot 1.2s ease-in-out infinite;
 }
 
@@ -649,18 +661,32 @@ const newLine = () => {
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes bounce-dot {
-  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
   40% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ── Quick Suggestions Area ─────────────────────────────────── */
+.quick-suggestions-area {
+  padding: 1rem;
+  border-top: 1px solid #E8DCD2;
+  flex-shrink: 0;
+}
+
+.suggestions-label {
+  margin: 0 0 0.8rem 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b4a3a;
 }
 
 /* ── Error Banner ───────────────────────────────────────────── */
 .ai-error-banner {
   margin: 0 1rem;
-  padding: 0.55rem 0.75rem;
-  background: rgba(239,68,68,0.12);
-  border: 1px solid rgba(239,68,68,0.3);
+  padding: 0.6rem 0.8rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: 10px;
-  color: #f87171;
+  color: #dc2626;
   font-size: 0.78rem;
   display: flex;
   align-items: center;
@@ -672,7 +698,7 @@ const newLine = () => {
   margin-left: auto;
   background: none;
   border: none;
-  color: #f87171;
+  color: #dc2626;
   cursor: pointer;
   font-size: 1rem;
   line-height: 1;
@@ -681,9 +707,9 @@ const newLine = () => {
 
 /* ── Input Area ─────────────────────────────────────────────── */
 .ai-input-area {
-  padding: 0.75rem 1rem 0.6rem;
-  border-top: 1px solid rgba(124,58,237,0.2);
-  background: #0f0f1a;
+  padding: 0.75rem 1rem 1rem;
+  border-top: 1px solid #E8DCD2;
+  background: #FBF7F2;
   flex-shrink: 0;
 }
 
@@ -691,16 +717,16 @@ const newLine = () => {
   display: flex;
   align-items: flex-end;
   gap: 0.5rem;
-  background: #1a1830;
-  border: 1px solid rgba(124,58,237,0.3);
-  border-radius: 14px;
-  padding: 0.5rem 0.5rem 0.5rem 0.8rem;
+  background: #FFF9F4;
+  border: 1px solid #D4C4B0;
+  border-radius: 24px;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
   transition: border-color 0.2s;
 }
 
 .ai-input-wrapper:focus-within {
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
+  border-color: #6b4a3a;
+  box-shadow: 0 0 0 3px rgba(107, 74, 58, 0.08);
 }
 
 .ai-input-wrapper textarea {
@@ -708,7 +734,7 @@ const newLine = () => {
   background: transparent;
   border: none;
   outline: none;
-  color: #e2e8f0;
+  color: #3d2817;
   font-size: 0.84rem;
   font-family: inherit;
   resize: none;
@@ -718,7 +744,7 @@ const newLine = () => {
 }
 
 .ai-input-wrapper textarea::placeholder {
-  color: #4b5563;
+  color: #B09880;
 }
 
 .ai-input-wrapper textarea:disabled {
@@ -729,9 +755,9 @@ const newLine = () => {
 .ai-send-btn {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  background: #6b4a3a;
   color: #fff;
   cursor: pointer;
   display: flex;
@@ -742,19 +768,12 @@ const newLine = () => {
 }
 
 .ai-send-btn:hover:not(:disabled) {
-  transform: scale(1.05);
+  transform: scale(1.1);
   opacity: 0.9;
 }
 
 .ai-send-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
-}
-
-.ai-input-hint {
-  margin: 0.3rem 0 0;
-  font-size: 0.67rem;
-  color: #374151;
-  text-align: right;
 }
 </style>

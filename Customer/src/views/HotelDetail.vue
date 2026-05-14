@@ -1,130 +1,149 @@
 <template>
   <div class="hotel-detail-page">
-    <Navbar />
-
-    <div class="container">
-      <a class="back-link" @click.prevent="goBack">‹ Quay lại</a>
-
-      <div class="detail-grid">
-        <!-- Left: Images + Info -->
-        <div class="left-col">
-          <div class="gallery">
-            <div v-if="images.length > 0">
-              <img :src="selectedImage" alt="Main" class="main-image" />
-              <div class="thumbs">
-                <img v-for="(img, idx) in images" :key="idx" :src="img" :class="{active: selectedImage===img}" @click="selectedImage = img" />
+    <header class="header">
+      <div class="header-container">
+        <div class="logo" @click="goToHome" style="cursor: pointer;">
+          <div class="logo-icon">T</div>
+          <span class="logo-text">Travelstay</span>
+        </div>
+        <nav class="nav-links">
+          <a href="#">Khám phá</a>
+          <a href="#">Khách sạn</a>
+        </nav>
+        <div class="nav-actions">
+          <!-- Unauthenticated users -->
+          <template v-if="!isAuthenticated">
+            <RouterLink class="login-btn" to="/login?tab=login">Đăng nhập</RouterLink>
+            <RouterLink class="register-btn" to="/login?tab=register">Đăng ký</RouterLink>
+          </template>
+          
+          <!-- Authenticated users -->
+          <template v-else>
+            <a href="#" class="nav-link-action" @click.prevent="goToBookings" title="Đặt phòng của tôi">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 11h12v11H6z"/></svg>
+            </a>
+            <div class="user-menu">
+              <button class="user-icon-btn" @click="toggleMenu" title="Tài khoản">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </button>
+              <div v-if="showMenu" class="dropdown-menu-header">
+                <div class="dropdown-header">
+                  Tài khoản của tôi
+                </div>
+                <a href="#" class="dropdown-item" @click.prevent="goToProfile">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  Hồ sơ
+                </a>
+                <a href="#" class="dropdown-item" @click.prevent="goToBookings">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 11h12v11H6z"/></svg>
+                  Đặt phòng
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#" class="dropdown-item logout" @click.prevent="logout">
+                  Đăng xuất
+                </a>
               </div>
             </div>
-            <div v-else class="no-images">
-              <div class="no-images-content">
-                <span class="no-images-icon">🖼️</span>
-                <p class="no-images-text">Chưa có hình ảnh</p>
-                <p class="no-images-subtext">Khách sạn chưa cập nhật hình ảnh</p>
-              </div>
-            </div>
+          </template>
+        </div>
+      </div>
+    </header>
+
+    <div class="container main-container">
+      <div class="title-section">
+        <div class="title-left">
+          <h1 class="hotel-name">{{ hotel.hotelName }}</h1>
+          <div class="hotel-meta">
+            <span class="meta-location">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              {{ hotel.street }}, {{ hotel.district }}, {{ hotel.city }}, {{ hotel.country }}
+            </span>
+            <span class="meta-dot">•</span>
+            <span class="meta-rating">
+              <span class="star-icon">★</span> {{ hotel.rating }} - {{ reviews.length }} đánh giá
+            </span>
           </div>
+        </div>
+      </div>
 
-          <div class="title-row">
-            <div>
-              <h2 class="hotel-name">{{hotel.hotelName}}</h2>
-              <div class="hotel-meta">
-                <span class="hotel-location">
-                  <img width="20" height="20" src="https://img.icons8.com/windows/32/marker.png"
-                                    alt="marker" />
-                   {{hotel.street}}, {{hotel.district}}, {{hotel.city}}, {{hotel.country}}</span>
-                <span class="hotel-rating">
-                  <span class="rating-star">★</span>{{hotel.rating}}</span>
+      <div class="gallery-grid" v-if="images.length > 0">
+        <div class="gallery-main">
+          <img :src="images[0]" alt="Main" />
+        </div>
+        <div class="gallery-sub">
+          <img v-if="images[1]" :src="images[1]" alt="Sub 1" class="img-tr" />
+          <div v-else class="img-placeholder img-tr"></div>
+          <img v-if="images[2]" :src="images[2]" alt="Sub 2" class="img-br-none" />
+          <div v-else class="img-placeholder img-br-none"></div>
+          <img v-if="images[3]" :src="images[3]" alt="Sub 3" class="img-b-none" />
+          <div v-else class="img-placeholder img-b-none"></div>
+          <img v-if="images[4]" :src="images[4]" alt="Sub 4" class="img-br" />
+          <div v-else class="img-placeholder img-br"></div>
+        </div>
+      </div>
+      <div v-else class="no-images-banner">
+         <p>Khách sạn chưa cập nhật hình ảnh</p>
+      </div>
+
+      <div class="content-split">
+        <div class="left-content">
+          <section class="info-section">
+            <h2 class="section-title">Về chốn dừng chân này</h2>
+            <p class="hotel-desc">{{ hotel.description }}</p>
+          </section>
+
+          <section class="amenities-section" v-if="amenitiesList && amenitiesList.length">
+            <h2 class="section-title">Tiện nghi nổi bật</h2>
+            <div class="amenities-grid">
+              <div v-for="(amenity, idx) in amenitiesList.slice(0, 8)" :key="idx" class="amenity-pill">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                {{ amenity }}
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="section">
-            <h3>Mô tả</h3>
-            <p class="description">Khách sạn nằm tại {{hotel.street}}, {{hotel.district}}, {{hotel.city}}, {{hotel.country}}.</p>
-          </div>
-
-          <!-- <div class="section">
-            <h3>Tiện nghi</h3>
-            <div class="amenities">
-              <div class="amenity">
-                <span class="amenity-icon">📶</span>
-                <span>WiFi miễn phí</span>
-              </div>
-              <div class="amenity">
-                <span class="amenity-icon">🚗</span>
-                <span>Bãi đỗ xe</span>
-              </div>
-              <div class="amenity">
-                <span class="amenity-icon">☕</span>
-                <span>Quầy bar</span>
-              </div>
-              <div class="amenity">
-                <span class="amenity-icon">🍽️</span>
-                <span>Nhà hàng</span>
-              </div>
-            </div>
-          </div> -->
-
-          <div class="section">
-            <h3>Các loại phòng</h3>
-            <div class="room-types">
-              <div v-for="room in roomTypes" :key="room.id" class="room-card">
-                <div class="room-details">
-                  <div class="room-header">
-                    <h4 class="room-name">{{ room.name }}</h4>
-                    <span class="room-count" :class="{ 'out-of-stock': room.available === 0 }">
-                      {{ room.available === 0 ? 'Hết phòng' : `Còn ${room.available} phòng` }}
-                    </span>
-                  </div>
-                  <div class="room-specs">
-                    <span class="room-spec">
-                      <img width="20" height="20" src="https://img.icons8.com/windows/32/gender-neutral-user.png" alt="gender-neutral-user"/>
-                      Tối đa {{ room.capacity }} người</span>
-                  </div>
-                  <p class="room-description">{{ room.description }}</p>
-                  <div class="room-amenities">
-                    <span v-for="(amenity, idx) in room.amenities.split(',')" :key="idx" class="room-amenity">
-                      {{ amenity.trim() }}
-                    </span>
-                  </div>
-                  <div class="room-footer">
-                    <div class="room-price">
-                      <span class="price-value">{{ formatPrice(room.pricePerNight) }}</span>
-                      <span class="price-label">/đêm</span>
+          <section class="rooms-section">
+            <h2 class="section-title">Phòng nổi bật</h2>
+            <div class="room-list">
+              <div v-for="room in roomTypes" :key="room.id" class="room-row">
+                <div class="room-info">
+                  <h3 class="room-name-title">{{ room.name }}</h3>
+                  <p class="room-specs">Tối đa {{ room.capacity }} khách</p>
+                  <p class="room-specs-sub" v-if="room.description">{{ room.description }}</p>
+                </div>
+                <div class="room-price-col">
+                  <div class="price-val">{{ formatPrice(room.pricePerNight) }}</div>
+                  <div class="price-tax">đã bao gồm thuế</div>
+                </div>
+                <div class="room-action">
+                  <button v-if="!isRoomSelected(room.id)" class="select-btn" @click="toggleRoom(room)" :disabled="room.available === 0">
+                    {{ room.available === 0 ? 'Hết phòng' : 'Chọn phòng' }}
+                  </button>
+                  <div v-else class="qty-selector-wrap">
+                    <div class="qty-selector">
+                      <button class="qty-btn" @click="decreaseQuantity(room.id)">-</button>
+                      <span class="qty-val">{{ getRoomQuantity(room.id) }}</span>
+                      <button class="qty-btn" @click="increaseQuantity(room.id, room.available)">+</button>
                     </div>
-                    <div v-if="isRoomSelected(room.id)" class="room-quantity-section">
-                      <span class="quantity-label">Số lượng phòng:</span>
-                      <div class="room-quantity">
-                        <button class="qty-btn" @click="decreaseQuantity(room.id)">-</button>
-                        <input type="number" min="1" :max="room.available" :value="getRoomQuantity(room.id)" class="qty-input" @input="updateQuantity(room.id, $event)" readonly>
-                        <button class="qty-btn" @click="increaseQuantity(room.id, room.available)">+</button>
-                      </div>
-                      <span class="max-label">(Tối đa {{ room.available }})</span>
-                    </div>
-                    <button class="btn-select-room" @click="toggleRoom(room)" :disabled="room.available === 0">
-                      {{ room.available === 0 ? 'Hết phòng' : (isRoomSelected(room.id) ? 'Đã chọn' : 'Chọn phòng') }}
-                    </button>
+                    <div class="unselect-text" @click="toggleRoom(room)">Bỏ chọn</div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div class="section">
-            <div class="reviews-header">
-              <h3>Đánh giá từ khách hàng</h3>
-              <div class="rating-summary">
-                <span class="rating-star">★</span>
-                <span class="rating-score">{{ overallRating }}</span>
-                <span class="rating-count">({{ reviews.length }} đánh giá)</span>
+          <section class="reviews-section">
+            <h2 class="section-title">Đánh giá từ khách hàng</h2>
+            <div class="reviews-header-modern">
+              <div class="rating-badge-large">
+                ★ {{ overallRating }}
               </div>
+              <div class="rating-text">Dựa trên {{ reviews.length }} đánh giá</div>
             </div>
 
-            <!-- Comment Form -->
-            <div class="comment-form">
+            <div class="comment-form-modern">
               <h4>Viết đánh giá của bạn</h4>
               <div class="star-rating-input">
-                <label>Đánh giá:</label>
                 <div class="stars-input">
                   <span 
                     v-for="i in 5" 
@@ -137,145 +156,127 @@
                   >★</span>
                 </div>
               </div>
-              <div class="comment-input-group">
-                <textarea 
-                  v-model="newComment.comment" 
-                  placeholder="Nhập nhận xét của bạn về khách sạn..."
-                  rows="4"
-                  class="comment-textarea"
-                ></textarea>
-              </div>
-              <button 
-                class="submit-comment-btn" 
-                @click="submitComment"
-                :disabled="isSubmittingComment"
-              >
+              <textarea 
+                v-model="newComment.comment" 
+                placeholder="Nhập nhận xét của bạn về khách sạn..."
+                rows="3"
+                class="comment-textarea-modern"
+              ></textarea>
+              <button class="submit-comment-btn-modern" @click="submitComment" :disabled="isSubmittingComment">
                 {{ isSubmittingComment ? 'Đang gửi...' : 'Gửi đánh giá' }}
               </button>
             </div>
             
-            <div class="reviews-list">
-              <div v-for="review in reviews" :key="review.id" class="review-card">
-                <div class="review-header">
-                  <div class="reviewer-avatar">{{ review.avatar }}</div>
-                  <div class="reviewer-info">
-                    <h4 class="reviewer-name">{{ review.name }}</h4>
-                    <div class="review-meta">
-                      <div class="review-stars">
-                        <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= review.rating }">⭐</span>
-                      </div>
-                      <span class="review-date">{{ review.date }}</span>
-                    </div>
+            <div class="reviews-list-modern">
+              <div v-for="review in reviews" :key="review.id" class="review-card-modern">
+                <div class="reviewer-avatar-modern">{{ review.avatar }}</div>
+                <div class="review-content">
+                  <div class="review-header-top">
+                    <h4 class="reviewer-name-modern">{{ review.name }}</h4>
+                    <span class="review-date-modern">{{ review.date }}</span>
                   </div>
+                  <div class="review-stars-modern">
+                    <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= review.rating }">★</span>
+                  </div>
+                  <p class="review-text-modern">{{ review.comment }}</p>
                 </div>
-                <p class="review-text">{{ review.comment }}</p>
               </div>
             </div>
-          </div>
+          </section>
         </div>
 
-        <!-- Right: Booking Sidebar -->
-        <aside class="right-col">
+        <aside class="right-sidebar">
           <div class="booking-card">
-            <div class="date-field">
-              <label>Ngày nhận phòng</label>
-              <div class="calendar-input" @click="showCheckInCal = !showCheckInCal">
-                <span class="calendar-icon">
-                  <img width="20" height="20" src="https://img.icons8.com/windows/32/planner.png" alt="planner"/>
-                </span>
-                <input type="text" readonly :value="formatDisplayDate(booking.checkIn)" placeholder="Chọn ngày">
+            <div class="booking-price-header">
+              <div class="price-left">
+                <div class="price-main">{{ formatPrice(calculateTotalAmount() > 0 ? (calculateTotalAmount() / calculateNights()) : (roomTypes[0] ? roomTypes[0].pricePerNight : 0)) }}</div>
+                <div class="price-sub">/ đêm - đã bao gồm thuế</div>
               </div>
-              <div v-if="showCheckInCal" class="calendar-popup">
+              <div class="rating-badge-small">
+                <span class="star">★</span> {{ hotel.rating }}
+              </div>
+            </div>
+
+            <div class="booking-inputs-wrap">
+              <div class="date-picker-row">
+                <div class="date-input-wrap" @click="showCheckInCal = !showCheckInCal">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  <input type="text" readonly :value="formatDisplayDate(booking.checkIn)" placeholder="Nhận phòng">
+                </div>
+                <div class="date-sep"></div>
+                <div class="date-input-wrap" @click="showCheckOutCal = !showCheckOutCal">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                  <input type="text" readonly :value="formatDisplayDate(booking.checkOut)" placeholder="Trả phòng">
+                </div>
+              </div>
+              
+              <div v-if="showCheckInCal" class="calendar-popup cal-in">
                 <div class="calendar-header">
-                  <button @click="prevMonth('checkIn')" class="nav-btn">‹</button>
+                  <button @click.stop="prevMonth('checkIn')" class="nav-btn">‹</button>
                   <span class="month-year">{{ getMonthYear(calendarMonth.checkIn) }}</span>
-                  <button @click="nextMonth('checkIn')" class="nav-btn">›</button>
+                  <button @click.stop="nextMonth('checkIn')" class="nav-btn">›</button>
                 </div>
                 <div class="calendar-grid">
                   <div class="day-header" v-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']" :key="d">{{d}}</div>
                   <div v-for="day in getCalendarDays(calendarMonth.checkIn)" :key="day.key"
                     :class="['calendar-day', {selected: isSelected(day.date, booking.checkIn), disabled: day.disabled, today: isToday(day.date)}]"
-                    @click="selectDate(day, 'checkIn')">
+                    @click.stop="selectDate(day, 'checkIn')">
                     {{day.label}}
                   </div>
                 </div>
               </div>
-            </div>
-
-            <div class="date-field">
-              <label>Ngày trả phòng</label>
-              <div class="calendar-input" @click="showCheckOutCal = !showCheckOutCal">
-                <span class="calendar-icon">
-                  <img width="20" height="20" src="https://img.icons8.com/windows/32/planner.png" alt="planner"/>
-                </span>
-                <input type="text" readonly :value="formatDisplayDate(booking.checkOut)" placeholder="Chọn ngày">
-              </div>
-              <div v-if="showCheckOutCal" class="calendar-popup">
+              
+              <div v-if="showCheckOutCal" class="calendar-popup cal-out">
                 <div class="calendar-header">
-                  <button @click="prevMonth('checkOut')" class="nav-btn">‹</button>
+                  <button @click.stop="prevMonth('checkOut')" class="nav-btn">‹</button>
                   <span class="month-year">{{ getMonthYear(calendarMonth.checkOut) }}</span>
-                  <button @click="nextMonth('checkOut')" class="nav-btn">›</button>
+                  <button @click.stop="nextMonth('checkOut')" class="nav-btn">›</button>
                 </div>
                 <div class="calendar-grid">
                   <div class="day-header" v-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']" :key="d">{{d}}</div>
                   <div v-for="day in getCalendarDays(calendarMonth.checkOut)" :key="day.key"
                     :class="['calendar-day', {selected: isSelected(day.date, booking.checkOut), disabled: day.disabled, today: isToday(day.date)}]"
-                    @click="selectDate(day, 'checkOut')">
+                    @click.stop="selectDate(day, 'checkOut')">
                     {{day.label}}
                   </div>
                 </div>
               </div>
-            </div>
 
-            <label>Số khách</label>
-            <input type="number" min="1" v-model.number="booking.guests" />
-
-            <!-- 💰 NEW: Booking Summary -->
-            <div v-if="selectedRooms.length > 0 && booking.checkIn && booking.checkOut" class="booking-summary">
-              <h4>Chi tiết đặt phòng</h4>
-              <div class="summary-details">
-                <div class="summary-nights">
-                  <span class="nights-count">{{ calculateNights() }} đêm</span>
-                  <span class="nights-dates">{{ formatDisplayDate(booking.checkIn) }} - {{ formatDisplayDate(booking.checkOut) }}</span>
-                </div>
-
-                <div class="summary-rooms">
-                  <div v-for="room in selectedRooms" :key="room.id" class="summary-room">
-                    <span class="room-summary">{{ room.quantity }}x {{ room.name }}</span>
-                    <span class="room-total">{{ formatPrice(room.pricePerNight * room.quantity) }}/đêm</span>
-                  </div>
-                </div>
-
-                <div class="summary-total">
-                  <div class="total-breakdown">
-                    <span>Tổng tiền phòng ({{ calculateNights() }} đêm):</span>
-                    <span class="total-amount">{{ formatPrice(calculateTotalAmount()) }}</span>
-                  </div>
-                </div>
+              <div class="guest-input-wrap">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <div class="guest-label">Khách:</div>
+                <input type="number" min="1" v-model.number="booking.guests" class="guest-input" />
               </div>
             </div>
 
-            <button class="book-btn" @click="bookNow" :disabled="selectedRooms.length === 0">
+            <button class="book-action-btn" @click="bookNow" :disabled="selectedRooms.length === 0">
               {{ selectedRooms.length === 0 ? 'Chọn phòng để đặt' : 'Đặt phòng ngay' }}
             </button>
-          </div>
+            <div class="cancel-note">Miễn phí hủy trước 48 giờ - Chưa thanh toán</div>
 
-          <p class="note"> Thanh toán an toàn qua PayOS</p>
+            <div class="summary-breakdown" v-if="selectedRooms.length > 0 && booking.checkIn && booking.checkOut">
+              <div class="breakdown-line">
+                <span>Giá phòng x {{ calculateNights() }} đêm</span>
+                <span>{{ formatPrice(calculateTotalAmount()) }}</span>
+              </div>
+              <div class="breakdown-line">
+                <span>Phí dịch vụ</span>
+                <span>0 đ</span>
+              </div>
+              <div class="breakdown-line total-line">
+                <span>Tổng cộng</span>
+                <span>{{ formatPrice(calculateTotalAmount()) }}</span>
+              </div>
+            </div>
+          </div>
         </aside>
       </div>
     </div>
-
-    <!-- Chat Widget -->
-    <!-- <ChatWidget
-      v-if="hotel.hotelName"
-      :hotelId="parseInt(hotelId)"
-      :hotelName="hotel.hotelName"
-    /> -->
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
 import ChatWidget from '@/components/ChatWidget.vue'
@@ -283,6 +284,43 @@ import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
 const hotelId = router.currentRoute.value.params.id
+
+// Authentication state
+const showMenu = ref(false)
+const isAuthenticated = computed(() => {
+  return !!localStorage.getItem('token')
+})
+
+const toggleMenu = () => {
+  showMenu.value = !showMenu.value
+}
+
+const closeMenu = (e) => {
+  if (!e.target.closest('.user-menu')) {
+    showMenu.value = false
+  }
+}
+
+const goToHome = () => {
+  router.push('/home')
+}
+
+const goToProfile = () => {
+  showMenu.value = false
+  router.push('/profile')
+}
+
+const goToBookings = () => {
+  showMenu.value = false
+  router.push('/bookings')
+}
+
+const logout = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('role')
+  showMenu.value = false
+  window.location.href = '/'
+}
 
 const hotel = ref({
   hotelName: '',
@@ -292,7 +330,8 @@ const hotel = ref({
   country: '',
   rating: 0,
   aminities: '',
-  imageUrl: []
+  imageUrl: [],
+  description: ''
 })
 
 const images = ref([])
@@ -480,9 +519,14 @@ const submitComment = async () => {
 }
 
 onMounted(() => {
+  document.addEventListener('click', closeMenu)
   fetchHotelDetail()
   fetchRooms()
   fetchComments()
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeMenu)
 })
 
 const booking = ref({ checkIn: '', checkOut: '', guests: 2 })
@@ -756,8 +800,15 @@ const increaseQuantity = (roomId, max) => {
 
 const decreaseQuantity = (roomId) => {
   const room = selectedRooms.value.find(r => r.id === roomId)
-  if (room && room.quantity > 1) {
-    room.quantity--
+  if (room) {
+    if (room.quantity > 1) {
+      room.quantity--
+    } else {
+      const idx = selectedRooms.value.findIndex(r => r.id === roomId)
+      if (idx > -1) {
+        selectedRooms.value.splice(idx, 1)
+      }
+    }
   }
 }
 
@@ -790,1259 +841,828 @@ const calculateTotalAmount = () => {
 </script>
 
 <style scoped>
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 5rem 1rem 3rem;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+.hotel-detail-page {
+  font-family: 'Inter', sans-serif;
+  background-color: #FCFBF7;
+  min-height: 100vh;
+  color: #1A1A1A;
 }
 
-.back-link {
-  display: inline-block;
-  color: #1a8bb5;
-  margin-bottom: 1rem;
-  cursor: pointer;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 2rem;
-}
-
-.left-col {
+/* Header */
+.header {
+  padding: 20px 0;
   background: transparent;
 }
-
-.gallery {
-  border-radius: 12px;
-}
-
-.main-image {
-  width: 100%;
-  height: 360px;
-  object-fit: cover;
-  border-radius: 12px;
-  display: block;
-}
-
-.thumbs {
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
   display: flex;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 0.5rem;
-  scrollbar-width: thin;
-  scrollbar-color: #22a6d6 #f0f0f0;
+  align-items: center;
+  justify-content: space-between;
 }
-
-.thumbs::-webkit-scrollbar {
-  height: 6px;
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-
-.thumbs::-webkit-scrollbar-track {
-  background: #f0f0f0;
-  border-radius: 3px;
+.logo-icon {
+  background-color: #614638;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
 }
-
-.thumbs::-webkit-scrollbar-thumb {
-  background: #22a6d6;
-  border-radius: 3px;
+.logo-text {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1A1A1A;
 }
-
-.thumbs::-webkit-scrollbar-thumb:hover {
-  background: #1a8bb5;
+.nav-links {
+  display: flex;
+  gap: 30px;
 }
-
-.thumbs img {
-  width: 70px;
-  height: 70px;
-  object-fit: cover;
-  border-radius: 8px;
+.nav-links a {
+  text-decoration: none;
+  color: #666;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-links a:hover {
+  color: #1A1A1A;
+}
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.icon-btn {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #1A1A1A;
   cursor: pointer;
-  opacity: 0.8;
-  border: 2px solid transparent;
+}
+.login-btn {
+  background-color: transparent;
+  color:  #614638;
+  text-decoration: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s, color 0.2s;
+}
+.register-btn {
+  background-color: #614638;
+  color: white;
+  text-decoration: none;
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* User Menu - Authenticated Header */
+.nav-link-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  color: #614638;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+  text-decoration: none;
+}
+
+.nav-link-action:hover {
+  background-color: #F5F1EB;
+}
+
+.nav-link-action svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: #614638;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.user-icon-btn:hover {
+  background-color: #F5F1EB;
+}
+
+.user-icon-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+}
+
+.dropdown-menu-header {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  overflow: hidden;
+  animation: slideDown 0.2s ease;
+  z-index: 1000;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-header {
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 0.95rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.2s;
+  font-size: 0.95rem;
+}
+
+.dropdown-item:hover {
+  background: #f5f7fa;
+}
+
+.dropdown-item svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
   flex-shrink: 0;
 }
 
-.thumbs img.active {
-  opacity: 1;
-  border-color: #22a6d6;
+.dropdown-item.logout {
+  color: #e74c3c;
+  font-weight: 500;
 }
 
-.no-images {
-  width: 100%;
-  height: 360px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px dashed #d0d0d0;
+.dropdown-item.logout:hover {
+  background: #ffebee;
 }
 
-.no-images-content {
-  text-align: center;
-  padding: 2rem;
+.dropdown-divider {
+  height: 1px;
+  background: #f0f0f0;
+  margin: 0.5rem 0;
 }
 
-.no-images-icon {
-  font-size: 4rem;
-  display: block;
-  margin-bottom: 1rem;
-  opacity: 0.5;
+
+/* Container */
+.main-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 20px 80px;
 }
 
-.no-images-text {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #666;
-  margin-bottom: 0.5rem;
-}
-
-.no-images-subtext {
-  font-size: 0.95rem;
-  color: #999;
-}
-
-.title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 1rem 0;
-}
-
-.hotel-name {
-  font-size: 1.4rem;
-  font-weight: 700;
-}
-
-.hotel-meta {
-  color: #666;
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.hotel-rating {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.hotel-rating .rating-star {
-  display: inline-flex;
-  align-items: center;
-  line-height: 1;
-}
-
-.section {
-  background: white;
-  border-radius: 12px;
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
-}
-
-.amenities {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
-}
-
-.amenity {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.25rem;
-  background: white;
-  border: 1px solid #e7eef1;
-  border-radius: 12px;
-  text-align: center;
-  transition: all 0.3s;
-}
-
-.amenity:hover {
-  border-color: #22a6d6;
-  box-shadow: 0 2px 8px rgba(34, 166, 214, 0.1);
-}
-
-.amenity-icon {
-  font-size: 2rem;
-}
-
-/* Room Types Section */
-.room-types {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.room-card {
-  border: 1px solid #e7eef1;
-  border-radius: 12px;
-  overflow: hidden;
-  background: white;
-  transition: all 0.3s;
-  position: relative;
-}
-
-.room-card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  border-color: #22a6d6;
-}
-
-.room-card:has(.btn-select-room:disabled) {
-  opacity: 0.6;
-}
-
-.room-card:has(.btn-select-room:disabled):hover {
-  box-shadow: none;
-  border-color: #e7eef1;
-}
-
-.room-details {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.room-header {
+/* Title Section */
+.title-section {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  margin-bottom: 24px;
 }
-
-.room-name {
-  font-size: 1.2rem;
+.hotel-name {
+  font-size: 2rem;
   font-weight: 700;
-  color: #333;
+  margin: 0 0 8px 0;
 }
-
-.room-count {
-  background: #e8f5e9;
-  color: #2e7d32;
-  padding: 0.25rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.room-count.out-of-stock {
-  background: #ffebee;
-  color: #c62828;
-}
-
-.room-specs {
+.hotel-meta {
   display: flex;
-  gap: 1.5rem;
-}
-
-.room-spec {
+  align-items: center;
+  gap: 8px;
   color: #666;
   font-size: 0.9rem;
 }
-
-.room-description {
-  color: #666;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.room-amenities {
+.meta-location {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.room-amenity {
-  background: #f5f7fa;
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  color: #555;
-  display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 4px;
 }
-
-.room-amenity::before {
-  content: '✓';
-  color: #22a6d6;
-  font-weight: 700;
+.meta-dot {
+  color: #ccc;
 }
-
-.room-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-  padding-top: 0.75rem;
-  border-top: 1px solid #f0f0f0;
-}
-
-.room-price {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.price-value {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #22a6d6;
-}
-
-.price-label {
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.btn-select-room {
-  background: #22a6d6;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.75rem;
-  border-radius: 8px;
+.meta-rating {
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
 }
-
-.btn-select-room:hover {
-  background: #1a8bb5;
-  transform: translateY(-2px);
+.star-icon {
+  color: #FFB800;
 }
-
-.btn-select-room:disabled {
-  background: #e0e0e0;
-  color: #999;
-  cursor: not-allowed;
-  transform: none;
+.title-right {
+  display: flex;
+  gap: 12px;
 }
-
-.btn-select-room:disabled:hover {
-  background: #e0e0e0;
-  transform: none;
-}
-
-.room-quantity-section {
+.action-btn {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-right: 1rem;
-}
-
-.quantity-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #333;
-  white-space: nowrap;
-}
-
-.room-quantity {
-  display: flex;
-  align-items: center;
-  gap: 0;
+  gap: 6px;
   background: white;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 8px;
-  overflow: hidden;
+  border: 1px solid #E5E5E5;
+  padding: 8px 16px;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.action-btn:hover {
+  background: #f9f9f9;
 }
 
-.qty-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: white;
-  cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #666;
+/* Gallery Grid */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  height: 400px;
+  margin-bottom: 64px;
+}
+.gallery-main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 24px 0 0 24px;
+}
+.gallery-sub {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 12px;
+}
+.gallery-sub img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.img-tr { border-radius: 0 24px 0 0; }
+.img-br { border-radius: 0 0 24px 0; }
+.img-placeholder {
+  background: #eaeaea;
+}
+.no-images-banner {
+  height: 400px;
+  border-radius: 24px;
+  background: #eaeaea;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.qty-btn:hover {
-  background: #f5f5f5;
-  color: #22a6d6;
-}
-
-.qty-btn:active {
-  transform: scale(0.95);
-}
-
-.qty-input {
-  width: 50px;
-  height: 36px;
-  text-align: center;
-  border: none;
-  background: white;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333;
-  cursor: default;
-}
-
-.qty-input:focus {
-  outline: none;
-}
-
-.max-label {
-  font-size: 0.9rem;
-  color: #999;
-  white-space: nowrap;
-}
-
-/* Remove number input arrows */
-.qty-input::-webkit-inner-spin-button,
-.qty-input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.qty-input[type=number] {
-  -moz-appearance: textfield;
-  appearance: textfield;
-}
-
-/* Right column */
-.right-col {
-  position: sticky;
-  top: 90px;
-  height: fit-content;
-}
-
-.price-unit {
+  margin-bottom: 64px;
   color: #666;
-  font-size: 1rem;
-  font-weight: 400;
-  margin-left: 0.25rem;
+  font-weight: 500;
 }
 
-.booking-card {
-  background: white;
-  border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+/* Content Split */
+.content-split {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 48px;
 }
 
-.date-field {
-  position: relative;
+/* Left Content */
+.section-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #1A1A1A;
 }
-
-.calendar-input {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  border: 1px solid #e7eef1;
-  border-radius: 8px;
-  cursor: pointer;
-  background: white;
+.info-section {
+  margin-bottom: 40px;
 }
-
-.calendar-input:hover {
-  border-color: #22a6d6;
-}
-
-.calendar-icon {
-  font-size: 1.1rem;
-}
-
-.calendar-input input {
-  border: none;
-  outline: none;
-  flex: 1;
-  cursor: pointer;
+.hotel-desc {
+  color: #444;
+  line-height: 1.6;
   font-size: 0.95rem;
 }
 
+/* Amenities */
+.amenities-section {
+  margin-bottom: 40px;
+}
+.amenities-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.amenity-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid #E5E5E5;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  color: #333;
+}
+.amenity-pill svg {
+  color: #1A1A1A;
+}
+
+/* Rooms */
+.rooms-section {
+  margin-bottom: 40px;
+}
+.room-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.room-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.room-row:hover {
+  border-color: #E5E5E5;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+}
+.room-info {
+  flex: 1;
+}
+.room-name-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+.room-specs {
+  color: #666;
+  font-size: 0.85rem;
+  margin: 0;
+}
+.room-specs-sub {
+  color: #888;
+  font-size: 0.8rem;
+  margin: 4px 0 0 0;
+}
+.room-price-col {
+  text-align: right;
+  margin-right: 24px;
+}
+.price-val {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+.price-tax {
+  font-size: 0.75rem;
+  color: #888;
+}
+.select-btn {
+  background: #614638;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.select-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.qty-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #F7F5F2;
+  padding: 6px 12px;
+  border-radius: 50px;
+}
+.qty-btn {
+  background: white;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 700;
+  cursor: pointer;
+}
+.qty-val {
+  font-weight: 600;
+  min-width: 20px;
+  text-align: center;
+}
+.qty-selector-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.unselect-text {
+  font-size: 0.8rem;
+  color: #c62828;
+  cursor: pointer;
+  font-weight: 500;
+}
+.unselect-text:hover {
+  text-decoration: underline;
+}
+
+/* Reviews */
+.reviews-header-modern {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.rating-badge-large {
+  background: #FEF9C3;
+  color: #854D0E;
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.rating-text {
+  color: #666;
+}
+.comment-form-modern {
+  background: white;
+  padding: 24px;
+  border-radius: 20px;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+}
+.comment-form-modern h4 {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+}
+.stars-input {
+  margin-bottom: 16px;
+}
+.star-btn {
+  font-size: 1.5rem;
+  color: #E5E5E5;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.star-btn.active, .star-btn.hover {
+  color: #FFB800;
+}
+.comment-textarea-modern {
+  width: 100%;
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  padding: 12px;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 16px;
+}
+.submit-comment-btn-modern {
+  background: #1A1A1A;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.submit-comment-btn-modern:disabled {
+  opacity: 0.5;
+}
+.reviews-list-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.review-card-modern {
+  display: flex;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #E5E5E5;
+}
+.reviewer-avatar-modern {
+  width: 48px;
+  height: 48px;
+  background: #F7F5F2;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #614638;
+}
+.review-content {
+  flex: 1;
+}
+.review-header-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.reviewer-name-modern {
+  margin: 0;
+  font-weight: 600;
+}
+.review-date-modern {
+  font-size: 0.8rem;
+  color: #888;
+}
+.review-stars-modern .star {
+  color: #E5E5E5;
+  font-size: 0.9rem;
+}
+.review-stars-modern .star.filled {
+  color: #FFB800;
+}
+.review-text-modern {
+  color: #444;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 8px 0 0 0;
+}
+
+/* Right Sidebar (Booking Card) */
+.right-sidebar {
+  position: relative;
+}
+.booking-card {
+  position: sticky;
+  top: 40px;
+  background: white;
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+.booking-price-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.price-main {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.price-sub {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 2px;
+}
+.rating-badge-small {
+  background: #FEF9C3;
+  color: #854D0E;
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.booking-inputs-wrap {
+  border: 1px solid #E5E5E5;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  position: relative;
+}
+.date-picker-row {
+  display: flex;
+  border-bottom: 1px solid #E5E5E5;
+}
+.date-input-wrap {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.date-input-wrap svg {
+  color: #888;
+}
+.date-input-wrap input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 0.9rem;
+  cursor: pointer;
+  background: transparent;
+}
+.date-sep {
+  width: 1px;
+  background: #E5E5E5;
+}
+.guest-input-wrap {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.guest-input-wrap svg {
+  color: #888;
+}
+.guest-label {
+  font-size: 0.9rem;
+  color: #444;
+}
+.guest-input {
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.book-action-btn {
+  width: 100%;
+  background: #614638;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: background 0.2s;
+}
+.book-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cancel-note {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #888;
+  margin-bottom: 24px;
+}
+.summary-breakdown {
+  border-top: 1px solid #E5E5E5;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.breakdown-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #444;
+}
+.total-line {
+  font-weight: 700;
+  color: #1A1A1A;
+  font-size: 1rem;
+  margin-top: 8px;
+  border-top: 1px solid #E5E5E5;
+  padding-top: 16px;
+}
+
+/* Calendar popups */
 .calendar-popup {
   position: absolute;
-  top: calc(100% + 0.5rem);
-  left: 0;
+  top: 60px;
   background: white;
+  border: 1px solid #E5E5E5;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  padding: 1rem;
+  padding: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   z-index: 100;
-  min-width: 300px;
+  width: calc(100% + 20px);
 }
+.cal-in { left: -10px; }
+.cal-out { right: -10px; }
 
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
 }
-
 .nav-btn {
-  background: none;
+  background: #F7F5F2;
   border: none;
-  font-size: 1.5rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  color: #22a6d6;
-  border-radius: 6px;
+  font-weight: bold;
 }
-
-.nav-btn:hover {
-  background: #f0f8fb;
-}
-
 .month-year {
   font-weight: 600;
-  font-size: 0.95rem;
 }
-
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.25rem;
+  gap: 4px;
+  text-align: center;
 }
-
 .day-header {
-  text-align: center;
-  font-size: 0.75rem;
-  color: #999;
-  padding: 0.5rem 0;
-  font-weight: 600;
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 8px;
 }
-
 .calendar-day {
-  text-align: center;
-  padding: 0.6rem 0;
-  cursor: pointer;
-  border-radius: 6px;
+  padding: 8px 0;
   font-size: 0.9rem;
-  transition: all 0.2s;
+  cursor: pointer;
+  border-radius: 8px;
 }
-
 .calendar-day:hover:not(.disabled) {
-  background: #f0f8fb;
+  background: #F7F5F2;
 }
-
 .calendar-day.disabled {
   color: #ccc;
   cursor: not-allowed;
 }
-
 .calendar-day.selected {
-  background: #ffb347;
+  background: #614638;
   color: white;
-  font-weight: 600;
 }
-
 .calendar-day.today {
-  border: 2px solid #22a6d6;
-}
-
-.booking-card input[type="date"],
-.booking-card input[type="number"] {
-  padding: 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #e7eef1;
-}
-
-.book-btn {
-  background: #22a6d6;
-  color: white;
-  border: none;
-  padding: 0.85rem;
-  border-radius: 8px;
   font-weight: 700;
-  cursor: pointer;
+  color: #614638;
 }
 
-/* Booking Summary Styles */
-.booking-summary {
-  background: #f8fafb;
-  border-radius: 12px;
-  padding: 1rem;
-  border: 1px solid #e7eef1;
-  margin: 0.75rem 0;
-}
-
-.booking-summary h4 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #333;
-  border-bottom: 1px solid #e7eef1;
-  padding-bottom: 0.5rem;
-}
-
-.summary-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.summary-nights {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.nights-count {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #22a6d6;
-}
-
-.nights-dates {
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.summary-rooms {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.summary-room {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #e7eef1;
-}
-
-.room-summary {
-  font-size: 0.9rem;
-  color: #333;
-}
-
-.room-total {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #666;
-}
-
-.summary-total {
-  border-top: 1px solid #e7eef1;
-  padding-top: 0.75rem;
-}
-
-.total-breakdown {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.total-breakdown span:first-child {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #333;
-}
-
-.total-amount {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #22a6d6;
-}
-
-.book-btn:disabled {
-  background: #e0e0e0;
-  color: #999;
-  cursor: not-allowed;
-}
-
-.book-btn:disabled:hover {
-  background: #e0e0e0;
-  transform: none;
-}
-
-.note {
-  color: #777;
-  font-size: 0.9rem;
-  margin-top: 0.5rem;
-  text-align: center;
-}
-
-@media (max-width: 980px) {
-  .detail-grid {
+@media (max-width: 900px) {
+  .content-split {
     grid-template-columns: 1fr;
   }
-
-  .right-col {
+  .gallery-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .gallery-main img {
+    border-radius: 24px;
+    height: 300px;
+  }
+  .gallery-sub {
+    display: none;
+  }
+  .booking-card {
     position: static;
   }
-}
-
-/* Reviews Section */
-.reviews-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.reviews-header h3 {
-  margin: 0;
-}
-
-.rating-summary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.rating-star {
-  font-size: 1.5rem;
-  color: #f59e0b;
-}
-
-.rating-score {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #333;
-}
-
-.rating-count {
-  font-size: 0.95rem;
-  color: #666;
-}
-
-.hotel-location {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #666;
-    margin-bottom: 0;
-    flex: 1;
-}
-
-.hotel-location img {
-    flex-shrink: 0;
-}
-
-.reviews-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.review-card {
-  background: #f9fafb;
-  border-radius: 12px;
-  padding: 1.25rem;
-  border: 1px solid #e7eef1;
-  transition: all 0.2s;
-}
-
-.review-card:hover {
-  border-color: #22a6d6;
-  box-shadow: 0 2px 8px rgba(34, 166, 214, 0.1);
-}
-
-.review-header {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.reviewer-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #22a6d6, #1a8bb5);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.2rem;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.reviewer-info {
-  flex: 1;
-}
-
-.reviewer-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #333;
-  margin: 0 0 0.25rem 0;
-}
-
-.review-meta {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.review-stars {
-  display: flex;
-  gap: 0.15rem;
-}
-
-.star {
-  font-size: 0.9rem;
-  filter: grayscale(100%);
-  opacity: 0.3;
-}
-
-.star.filled {
-  filter: none;
-  opacity: 1;
-}
-
-.review-date {
-  font-size: 0.85rem;
-  color: #999;
-}
-
-.review-text {
-  color: #666;
-  line-height: 1.6;
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-/* Comment Form Styles */
-.comment-form {
-  background: #f9fafb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid #e7eef1;
-}
-
-.comment-form h4 {
-  margin: 0 0 1rem 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #333;
-}
-
-.star-rating-input {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.star-rating-input label {
-  font-size: 0.95rem;
-  color: #666;
-  font-weight: 600;
-}
-
-.stars-input {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.star-btn {
-  font-size: 1.75rem;
-  cursor: pointer;
-  color: transparent;
-  transition: all 0.2s;
-  -webkit-text-stroke: 2px #9ca3af;
-  text-stroke: 2px #9ca3af;
-}
-
-.star-btn.active,
-.star-btn.hover {
-  color: #f59e0b;
-  -webkit-text-stroke: 2px #f59e0b;
-  text-stroke: 2px #f59e0b;
-}
-
-.star-btn:hover {
-  transform: scale(1.1);
-}
-
-.comment-input-group {
-  margin-bottom: 1rem;
-}
-
-.comment-textarea {
-  width: 95%;
-  padding: 0.875rem 1rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-family: inherit;
-  resize: vertical;
-  min-height: 100px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.comment-textarea:focus {
-  outline: none;
-  border-color: #22a6d6;
-  box-shadow: 0 0 0 3px rgba(34, 166, 214, 0.1);
-}
-
-.comment-textarea::placeholder {
-  color: #999;
-}
-
-.submit-comment-btn {
-  background: linear-gradient(135deg, #22a6d6, #1a8bb5);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.submit-comment-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #1a8bb5, #157a9e);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(34, 166, 214, 0.3);
-}
-
-.submit-comment-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ==================== RESPONSIVE STYLES ==================== */
-
-/* Tablet (1024px) */
-@media (max-width: 1024px) {
-  .hotel-container {
-    padding: 80px 1.5rem 2rem;
-  }
-  
-  .image-grid {
-    gap: 0.5rem;
-  }
-}
-
-/* Tablet Portrait (768px) */
-@media (max-width: 768px) {
-  .hotel-container {
-    padding: 70px 1rem 1.5rem;
-  }
-  
-  .image-grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto;
-  }
-  
-  .main-image {
-    height: 250px;
-  }
-  
-  .sub-images {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.375rem;
-  }
-  
-  .sub-image {
-    height: 80px;
-  }
-  
-  .hotel-title {
-    font-size: 1.5rem;
-  }
-  
-  .hotel-location {
-    font-size: 0.9rem;
-  }
-  
-  .info-card {
-    padding: 1.25rem;
-  }
-  
-  .amenity-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-  
-  .booking-card {
-    padding: 1.25rem;
-  }
-  
-  .room-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .reviews-header {
+  .room-row {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    align-items: stretch;
+    gap: 16px;
   }
-  
-  .comment-form {
-    padding: 1.25rem;
+  .room-price-col {
+    text-align: left;
+    margin: 0;
   }
-  
-  .star-rating-input {
+  .title-section {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    gap: 16px;
   }
-  
-  .comment-textarea {
+  .calendar-popup {
+    left: 0;
+    right: 0;
     width: 100%;
-  }
-}
-
-/* Mobile (640px) */
-@media (max-width: 640px) {
-  .hotel-container {
-    padding: 65px 0.75rem 1rem;
-  }
-  
-  .main-image {
-    height: 200px;
-    border-radius: 10px;
-  }
-  
-  .sub-images {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  .sub-image {
-    height: 70px;
-    border-radius: 6px;
-  }
-  
-  .more-overlay {
-    font-size: 0.9rem;
-    border-radius: 6px;
-  }
-  
-  .hotel-header {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .hotel-title {
-    font-size: 1.25rem;
-  }
-  
-  .hotel-location {
-    font-size: 0.85rem;
-  }
-  
-  .info-card {
-    padding: 1rem;
-    border-radius: 10px;
-    margin-bottom: 1rem;
-  }
-  
-  .info-card h3 {
-    font-size: 1.1rem;
-    margin-bottom: 0.75rem;
-  }
-  
-  .amenity-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-  }
-  
-  .amenity-item {
-    padding: 0.625rem;
-    font-size: 0.85rem;
-  }
-  
-  .amenity-item img {
-    width: 18px;
-    height: 18px;
-  }
-  
-  .room-card {
-    padding: 1rem;
-    border-radius: 10px;
-  }
-  
-  .room-name {
-    font-size: 1rem;
-  }
-  
-  .room-price {
-    font-size: 1.25rem;
-  }
-  
-  .booking-card {
-    padding: 1rem;
-    border-radius: 10px;
-    margin-bottom: 1rem;
-  }
-  
-  .booking-card h3 {
-    font-size: 1.1rem;
-  }
-  
-  .date-inputs {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .date-input {
-    padding: 0.75rem;
-  }
-  
-  .guest-selector {
-    padding: 0.75rem;
-  }
-  
-  .btn-book {
-    padding: 0.875rem;
-    font-size: 0.95rem;
-  }
-  
-  .price-info {
-    font-size: 1.25rem;
-  }
-  
-  .reviews-section {
-    padding: 1rem;
-  }
-  
-  .rating-star {
-    font-size: 1.25rem;
-  }
-  
-  .rating-score {
-    font-size: 1.25rem;
-  }
-  
-  .rating-count {
-    font-size: 0.85rem;
-  }
-  
-  .review-card {
-    padding: 1rem;
-  }
-  
-  .review-header {
-    gap: 0.75rem;
-  }
-  
-  .reviewer-avatar {
-    width: 36px;
-    height: 36px;
-    font-size: 0.9rem;
-  }
-  
-  .reviewer-name {
-    font-size: 0.95rem;
-  }
-  
-  .review-text {
-    font-size: 0.9rem;
-  }
-  
-  .comment-form {
-    padding: 1rem;
-  }
-  
-  .comment-form h4 {
-    font-size: 1rem;
-  }
-  
-  .star-btn {
-    font-size: 1.25rem;
-  }
-  
-  .comment-textarea {
-    min-height: 80px;
-    font-size: 0.9rem;
-  }
-  
-  .submit-comment-btn {
-    width: 100%;
-    padding: 0.75rem;
-  }
-}
-
-/* Small Mobile (480px) */
-@media (max-width: 480px) {
-  .hotel-container {
-    padding: 60px 0.5rem 0.75rem;
-  }
-  
-  .main-image {
-    height: 180px;
-  }
-  
-  .sub-images {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .sub-image {
-    height: 60px;
-  }
-  
-  .hotel-title {
-    font-size: 1.125rem;
-  }
-  
-  .info-card,
-  .booking-card,
-  .room-card,
-  .review-card,
-  .comment-form {
-    padding: 0.875rem;
-  }
-  
-  .amenity-grid {
-    gap: 0.375rem;
-  }
-  
-  .amenity-item {
-    padding: 0.5rem;
-    font-size: 0.8rem;
-    gap: 0.375rem;
-  }
-  
-  .amenity-item img {
-    width: 16px;
-    height: 16px;
-  }
-  
-  .room-features {
-    gap: 0.375rem;
-  }
-  
-  .feature-tag {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-  }
-  
-  .room-price {
-    font-size: 1.125rem;
-  }
-  
-  .btn-select {
-    padding: 0.625rem 1rem;
-    font-size: 0.85rem;
-  }
-  
-  .date-input,
-  .guest-selector {
-    font-size: 0.9rem;
-  }
-  
-  .reviewer-avatar {
-    width: 32px;
-    height: 32px;
-    font-size: 0.8rem;
   }
 }
 </style>
