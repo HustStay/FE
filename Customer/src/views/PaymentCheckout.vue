@@ -23,9 +23,14 @@
             <div class="payment-body">
               <div class="qr-col">
                 <div class="qr-box">
-                  <img :src="qrUrl" alt="PayOS QR" class="qr-image" />
+                  <img v-if="qrUrl" :src="qrUrl" alt="PayOS QR" class="qr-image" />
+                  <div v-else class="qr-empty">Không có mã QR để hiển thị.</div>
                 </div>
-                <p class="qr-note">Mã được mã hóa theo chuẩn VietQR.</p>
+                <div class="amount-box">
+                  <span>Số tiền cần thanh toán</span>
+                  <strong>{{ formatPrice(totalAmount) }}</strong>
+                </div>
+                <p class="qr-note">Mở ứng dụng ngân hàng hoặc ví điện tử để quét mã QR.</p>
                 <button class="ghost-btn" @click="downloadQr">⭳ Tải mã QR</button>
                 <button class="payos-btn" @click="openPayOSPage" :disabled="redirecting">
                   {{ redirecting ? 'Đang chuyển sang PayOS...' : 'Thanh toán ngay (PayOS)' }}
@@ -149,6 +154,7 @@ const loading = ref(true)
 const redirecting = ref(false)
 const errorMessage = ref('')
 const copiedField = ref('')
+const DEFAULT_PAYOS_CHECKOUT_URL = 'https://pay.payos.vn/web/4ef6cb9ca85040f09e8ae3e99c659547/'
 
 const paymentInfo = ref({
   bookingId: null,
@@ -190,10 +196,14 @@ const asNumber = (value, fallback = 0) => {
   return Number.isFinite(num) ? num : fallback
 }
 
+const payosCheckoutUrl = computed(() => {
+  return pickFirst(paymentInfo.value.checkoutUrl, route.query.checkoutUrl, DEFAULT_PAYOS_CHECKOUT_URL)
+})
+
 const qrUrl = computed(() => {
   if (paymentInfo.value.qrCode) return paymentInfo.value.qrCode
-  if (!paymentInfo.value.checkoutUrl) return ''
-  return `https://api.qrserver.com/v1/create-qr-code/?size=420x420&data=${encodeURIComponent(paymentInfo.value.checkoutUrl)}`
+  if (!payosCheckoutUrl.value) return ''
+  return `https://api.qrserver.com/v1/create-qr-code/?size=420x420&data=${encodeURIComponent(payosCheckoutUrl.value)}`
 })
 
 const displayBankName = computed(() => pickFirst(paymentInfo.value.bankName, 'PayOS / VietQR'))
@@ -324,13 +334,14 @@ const openPayOSPage = async () => {
     hasCheckoutUrl = await fetchPaymentByOrderCode(paymentInfo.value.orderCode || route.query.orderCode)
   }
 
-  if (!hasCheckoutUrl) {
+  const checkoutTarget = payosCheckoutUrl.value
+  if (!hasCheckoutUrl && !checkoutTarget) {
     errorMessage.value = 'Không tìm thấy liên kết thanh toán PayOS. Vui lòng thử lại sau.'
     redirecting.value = false
     return
   }
 
-  window.location.assign(paymentInfo.value.checkoutUrl)
+  window.location.assign(checkoutTarget)
 }
 
 const loadPaymentInfo = async () => {
@@ -345,20 +356,22 @@ const loadPaymentInfo = async () => {
     }
 
     const resolvedOrderCode = paymentInfo.value.orderCode || orderCodeFromQuery
-    if (!resolvedOrderCode && !paymentInfo.value.checkoutUrl) {
+    if (!resolvedOrderCode && !payosCheckoutUrl.value) {
       errorMessage.value = 'Không tìm thấy thông tin phiên thanh toán.'
       return
     }
 
     if (resolvedOrderCode) {
       const loaded = await fetchPaymentByOrderCode(resolvedOrderCode)
-      if (!loaded && !paymentInfo.value.checkoutUrl) {
+      if (!loaded && !payosCheckoutUrl.value) {
         errorMessage.value = 'Không thể tải thông tin phiên thanh toán.'
       }
     }
   } catch (error) {
     console.error('❌ Error loading payment info:', error)
-    errorMessage.value = 'Đã xảy ra lỗi khi tải thông tin thanh toán.'
+    if (!payosCheckoutUrl.value) {
+      errorMessage.value = 'Đã xảy ra lỗi khi tải thông tin thanh toán.'
+    }
   } finally {
     loading.value = false
   }
@@ -471,10 +484,36 @@ onMounted(() => {
 }
 
 .qr-image {
-  width: min(100%, 310px);
+  width: min(100%, 320px);
   aspect-ratio: 1;
   object-fit: contain;
   border-radius: 12px;
+  background: #fff;
+}
+
+.qr-empty {
+  color: #7b6f62;
+  font-weight: 600;
+}
+
+.amount-box {
+  background: #f2ede5;
+  border: 1px solid #ddd4c7;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+}
+
+.amount-box span {
+  color: #6f6357;
+  font-size: 0.95rem;
+}
+
+.amount-box strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: #6d4e37;
+  font-size: 1.5rem;
+  line-height: 1.1;
 }
 
 .qr-note {
@@ -729,6 +768,10 @@ onMounted(() => {
 
   .payment-body {
     grid-template-columns: 1fr;
+  }
+
+  .qr-image {
+    width: min(100%, 280px);
   }
 
   .total-line strong {
