@@ -63,6 +63,11 @@
               <div class="total-label">Tổng tiền</div>
               <div class="total-amount">{{ booking.totalAmount ? booking.totalAmount.toLocaleString('vi-VN') + 'đ' : '—' }}</div>
               <button class="btn-detail" @click="showBookingDetail(booking)">Chi tiết →</button>
+              <button
+                v-if="canPayBooking(booking)"
+                class="btn-pay-inline"
+                @click="goToPaymentCheckout(booking)"
+              >Thanh toán ngay</button>
               <button 
                 v-if="booking.status === 'CONFIRMED' || booking.status === 'PENDING'"
                 class="btn-cancel-inline"
@@ -102,6 +107,11 @@
           </div>
         </div>
         <div class="modal-actions">
+          <button
+            v-if="canPayBooking(selectedBooking)"
+            class="btn-pay"
+            @click="goToPaymentCheckout(selectedBooking)"
+          >Thanh toán ngay</button>
           <button 
             v-if="selectedBooking.status === 'CONFIRMED' || selectedBooking.status === 'PENDING'"
             class="btn-cancel" 
@@ -125,6 +135,48 @@ const activeTab = ref('all')
 const bookings = ref([])
 const loading = ref(false)
 const selectedBooking = ref(null)
+
+const pickFirst = (...values) => {
+  for (const value of values) {
+    if (value === undefined || value === null) continue
+    const normalized = String(value).trim()
+    if (normalized) return normalized
+  }
+  return ''
+}
+
+const asNumber = (value, fallback = 0) => {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
+const getNights = (checkInDate, checkOutDate) => {
+  const checkIn = new Date(checkInDate)
+  const checkOut = new Date(checkOutDate)
+  if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime())) return 1
+  const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24))
+  return nights > 0 ? nights : 1
+}
+
+const getBookingOrderCode = (booking) => {
+  return pickFirst(
+    booking.orderCode,
+    booking.sessionId,
+    booking.paymentSessionId,
+    booking.payment?.sessionId,
+    booking.payment?.orderCode
+  )
+}
+
+const getBookingCheckoutUrl = (booking) => {
+  return pickFirst(
+    booking.checkoutUrl,
+    booking.paymentUrl,
+    booking.sessionUrl,
+    booking.payment?.checkoutUrl,
+    booking.payment?.sessionUrl
+  )
+}
 
 // Fetch bookings from API
 const fetchBookings = async () => {
@@ -173,7 +225,13 @@ const fetchBookings = async () => {
             checkInDate: booking.checkInDate,
             checkOutDate: booking.checkOutDate,
             guests: booking.guests,
-            status: booking.status
+            status: booking.status,
+            totalAmount: asNumber(booking.totalAmount, asNumber(booking.amount)),
+            orderCode: getBookingOrderCode(booking),
+            checkoutUrl: getBookingCheckoutUrl(booking),
+            roomSubtotal: asNumber(booking.roomSubtotal, asNumber(booking.totalAmount, asNumber(booking.amount))),
+            taxFee: asNumber(booking.taxFee),
+            serviceFee: asNumber(booking.serviceFee)
           }
         })
         console.log('Mapped bookings:', bookings.value)
@@ -255,6 +313,38 @@ const showBookingDetail = (booking) => {
 
 const closeModal = () => {
   selectedBooking.value = null
+}
+
+const canPayBooking = (booking) => {
+  if (!booking) return false
+  return booking.status === 'PENDING' || booking.status === 'CONFIRMED'
+}
+
+const goToPaymentCheckout = (booking) => {
+  const orderCode = getBookingOrderCode(booking)
+  const checkoutUrl = getBookingCheckoutUrl(booking)
+
+  sessionStorage.setItem('pendingPayment', JSON.stringify({
+    bookingId: booking.id,
+    orderCode: orderCode || undefined,
+    checkoutUrl: checkoutUrl || '',
+    amount: asNumber(booking.totalAmount),
+    hotelName: booking.hotelName,
+    hotelImage: booking.hotelImage,
+    location: booking.location,
+    checkInDate: booking.checkInDate,
+    checkOutDate: booking.checkOutDate,
+    guests: asNumber(booking.guests, 1),
+    nights: getNights(booking.checkInDate, booking.checkOutDate),
+    roomSubtotal: asNumber(booking.roomSubtotal, asNumber(booking.totalAmount)),
+    taxFee: asNumber(booking.taxFee),
+    serviceFee: asNumber(booking.serviceFee),
+    totalAmount: asNumber(booking.totalAmount)
+  }))
+
+  const query = orderCode ? { orderCode } : {}
+  closeModal()
+  router.push({ path: '/payment/checkout', query })
 }
 
 const canCancelBooking = (booking) => {
@@ -411,6 +501,12 @@ onMounted(() => {
   cursor: pointer; width: 100%; text-align: center; transition: opacity 0.2s;
 }
 .btn-detail:hover { opacity: 0.85; }
+.btn-pay-inline {
+  background: #75553c; color: white; border: none;
+  padding: 10px 18px; border-radius: 50px; font-size: 0.85rem; font-weight: 600;
+  cursor: pointer; width: 100%; text-align: center; transition: opacity 0.2s;
+}
+.btn-pay-inline:hover { opacity: 0.85; }
 .btn-cancel-inline {
   background: transparent; color: #888; border: 1px solid #E5E5E5;
   padding: 8px 18px; border-radius: 50px; font-size: 0.82rem; font-weight: 500;
@@ -451,7 +547,18 @@ onMounted(() => {
 .detail-label { font-weight: 600; color: #444; min-width: 100px; font-size: 0.9rem; }
 .detail-value { flex: 1; color: #666; font-size: 0.9rem; }
 .detail-value div { margin-bottom: 4px; }
-.modal-actions { padding: 0 24px 24px; }
+.modal-actions {
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.btn-pay {
+  width: 100%; padding: 14px; background: #614638; border: none;
+  border-radius: 12px; font-size: 0.95rem; font-weight: 600;
+  color: white; cursor: pointer; transition: background 0.2s;
+}
+.btn-pay:hover { background: #503a2f; }
 .btn-cancel {
   width: 100%; padding: 14px; background: #ef4444; border: none;
   border-radius: 12px; font-size: 0.95rem; font-weight: 600;
