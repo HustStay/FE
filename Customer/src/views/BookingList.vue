@@ -24,7 +24,6 @@
         <div v-if="loading" class="loading"><p>Đang tải...</p></div>
         
         <div v-else-if="filteredBookings.length === 0" class="empty-state">
-          <div class="empty-icon">🏨</div>
           <h3>Không có đặt phòng nào</h3>
           <p>Bạn chưa có đặt phòng nào trong mục này.</p>
         </div>
@@ -60,7 +59,7 @@
             </div>
 
             <div class="card-side">
-              <div class="total-label">Tổng tiền</div>
+              <div class="total-label">Tổng phí</div>
               <div class="total-amount">{{ booking.totalAmount ? booking.totalAmount.toLocaleString('vi-VN') + 'đ' : '—' }}</div>
               <button class="btn-detail" @click="showBookingDetail(booking)">Chi tiết →</button>
               <button
@@ -104,6 +103,12 @@
           <div class="detail-row">
             <div class="detail-label">Số khách</div>
             <div class="detail-value">{{ selectedBooking.guests }} khách</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Tổng phí</div>
+            <div class="detail-value" style="font-weight: 700; color: #614638;">
+              {{ selectedBooking.totalAmount ? selectedBooking.totalAmount.toLocaleString('vi-VN') + 'đ' : '—' }}
+            </div>
           </div>
         </div>
         <div class="modal-actions">
@@ -226,12 +231,12 @@ const fetchBookings = async () => {
             checkOutDate: booking.checkOutDate,
             guests: booking.guests,
             status: booking.status,
-            totalAmount: asNumber(booking.totalAmount, asNumber(booking.amount)),
+            totalAmount: asNumber(booking.fee),
             orderCode: getBookingOrderCode(booking),
             checkoutUrl: getBookingCheckoutUrl(booking),
-            roomSubtotal: asNumber(booking.roomSubtotal, asNumber(booking.totalAmount, asNumber(booking.amount))),
-            taxFee: asNumber(booking.taxFee),
-            serviceFee: asNumber(booking.serviceFee)
+            roomSubtotal: asNumber(booking.fee),
+            taxFee: 0,
+            serviceFee: 0
           }
         })
         console.log('Mapped bookings:', bookings.value)

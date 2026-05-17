@@ -17,6 +17,8 @@
     "@stomp/stompjs": "^7.3.0",
     "axios": "^1.13.1",
     "pinia": "^3.0.3",
+    "qrcode": "^1.5.4",
+    "vietqr": "^1.1.9",
     "vue": "^3.5.22",
     "vue-router": "^4.6.3"
   },

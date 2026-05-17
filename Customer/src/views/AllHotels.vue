@@ -31,9 +31,9 @@
               NHẬN - TRẢ PHÒNG
             </span>
             <div class="date-range">
-              <input v-model="searchForm.checkIn" type="date" />
+              <input v-model="searchForm.checkIn" type="date" :min="today" />
               <span>—</span>
-              <input v-model="searchForm.checkOut" type="date" />
+              <input v-model="searchForm.checkOut" type="date" :min="searchForm.checkIn || today" />
             </div>
           </div>
 
@@ -205,6 +205,8 @@ import { apiFetch } from '../utils/apiClient.js'
 const router = useRouter()
 
 const fallbackImage = 'https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=1200'
+
+const today = new Date().toISOString().split('T')[0]
 
 const searchForm = ref({
   location: '',

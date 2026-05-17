@@ -57,7 +57,7 @@
                                 </svg>
                                 NHẬN PHÒNG
                             </span>
-                            <input type="date" v-model="searchForm.checkIn" />
+                            <input type="date" v-model="searchForm.checkIn" :min="today" />
                         </div>
                         <div class="search-divider"></div>
                         <div class="search-item">
@@ -72,7 +72,7 @@
                                 </svg>
                                 TRẢ PHÒNG
                             </span>
-                            <input type="date" v-model="searchForm.checkOut" />
+                            <input type="date" v-model="searchForm.checkOut" :min="searchForm.checkIn || today" />
                         </div>
                         <div class="search-divider"></div>
                         <div class="search-item">
@@ -285,6 +285,8 @@ import Navbar from '@/components/Navbar.vue'
 import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
+
+const today = new Date().toISOString().split('T')[0]
 
 const searchForm = ref({
     location: '',

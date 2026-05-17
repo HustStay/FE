@@ -1,53 +1,6 @@
 <template>
   <div class="hotel-detail-page">
-    <header class="header">
-      <div class="header-container">
-        <div class="logo" @click="goToHome" style="cursor: pointer;">
-          <div class="logo-icon">T</div>
-          <span class="logo-text">Travelstay</span>
-        </div>
-        <nav class="nav-links">
-          <a href="#">Khám phá</a>
-          <a href="#">Khách sạn</a>
-        </nav>
-        <div class="nav-actions">
-          <!-- Unauthenticated users -->
-          <template v-if="!isAuthenticated">
-            <RouterLink class="login-btn" to="/login?tab=login">Đăng nhập</RouterLink>
-            <RouterLink class="register-btn" to="/login?tab=register">Đăng ký</RouterLink>
-          </template>
-          
-          <!-- Authenticated users -->
-          <template v-else>
-            <a href="#" class="nav-link-action" @click.prevent="goToBookings" title="Đặt phòng của tôi">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 11h12v11H6z"/></svg>
-            </a>
-            <div class="user-menu">
-              <button class="user-icon-btn" @click="toggleMenu" title="Tài khoản">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </button>
-              <div v-if="showMenu" class="dropdown-menu-header">
-                <div class="dropdown-header">
-                  Tài khoản của tôi
-                </div>
-                <a href="#" class="dropdown-item" @click.prevent="goToProfile">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  Hồ sơ
-                </a>
-                <a href="#" class="dropdown-item" @click.prevent="goToBookings">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 11h12v11H6z"/></svg>
-                  Đặt phòng
-                </a>
-                <div class="dropdown-divider"></div>
-                <a href="#" class="dropdown-item logout" @click.prevent="logout">
-                  Đăng xuất
-                </a>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-    </header>
+    <Navbar />
 
     <div class="container main-container">
       <div class="title-section">
@@ -218,7 +171,7 @@
                 </div>
                 <div class="calendar-grid">
                   <div class="day-header" v-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']" :key="d">{{d}}</div>
-                  <div v-for="day in getCalendarDays(calendarMonth.checkIn)" :key="day.key"
+                  <div v-for="day in getCalendarDays(calendarMonth.checkIn, 'checkIn')" :key="day.key"
                     :class="['calendar-day', {selected: isSelected(day.date, booking.checkIn), disabled: day.disabled, today: isToday(day.date)}]"
                     @click.stop="selectDate(day, 'checkIn')">
                     {{day.label}}
@@ -234,7 +187,7 @@
                 </div>
                 <div class="calendar-grid">
                   <div class="day-header" v-for="d in ['Su','Mo','Tu','We','Th','Fr','Sa']" :key="d">{{d}}</div>
-                  <div v-for="day in getCalendarDays(calendarMonth.checkOut)" :key="day.key"
+                  <div v-for="day in getCalendarDays(calendarMonth.checkOut, 'checkOut')" :key="day.key"
                     :class="['calendar-day', {selected: isSelected(day.date, booking.checkOut), disabled: day.disabled, today: isToday(day.date)}]"
                     @click.stop="selectDate(day, 'checkOut')">
                     {{day.label}}
@@ -284,43 +237,6 @@ import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
 const hotelId = router.currentRoute.value.params.id
-
-// Authentication state
-const showMenu = ref(false)
-const isAuthenticated = computed(() => {
-  return !!localStorage.getItem('token')
-})
-
-const toggleMenu = () => {
-  showMenu.value = !showMenu.value
-}
-
-const closeMenu = (e) => {
-  if (!e.target.closest('.user-menu')) {
-    showMenu.value = false
-  }
-}
-
-const goToHome = () => {
-  router.push('/home')
-}
-
-const goToProfile = () => {
-  showMenu.value = false
-  router.push('/profile')
-}
-
-const goToBookings = () => {
-  showMenu.value = false
-  router.push('/bookings')
-}
-
-const logout = () => {
-  localStorage.removeItem('token')
-  localStorage.removeItem('role')
-  showMenu.value = false
-  window.location.href = '/'
-}
 
 const hotel = ref({
   hotelName: '',
@@ -519,14 +435,9 @@ const submitComment = async () => {
 }
 
 onMounted(() => {
-  document.addEventListener('click', closeMenu)
   fetchHotelDetail()
   fetchRooms()
   fetchComments()
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', closeMenu)
 })
 
 const booking = ref({ checkIn: '', checkOut: '', guests: 2 })
@@ -566,7 +477,7 @@ const nextMonth = (type) => {
   calendarMonth.value[type] = d
 }
 
-const getCalendarDays = (monthDate) => {
+const getCalendarDays = (monthDate, type) => {
   const year = monthDate.getFullYear()
   const month = monthDate.getMonth()
   const firstDay = new Date(year, month, 1)
@@ -576,11 +487,15 @@ const getCalendarDays = (monthDate) => {
   const days = []
   const startPad = firstDay.getDay()
   
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
   // Previous month days
   for (let i = startPad - 1; i >= 0; i--) {
+    const d = new Date(year, month - 1, prevLastDay.getDate() - i)
     days.push({
       label: prevLastDay.getDate() - i,
-      date: new Date(year, month - 1, prevLastDay.getDate() - i),
+      date: d,
       disabled: true,
       key: `prev-${i}`
     })
@@ -588,10 +503,27 @@ const getCalendarDays = (monthDate) => {
   
   // Current month days
   for (let i = 1; i <= lastDay.getDate(); i++) {
+    const d = new Date(year, month, i)
+    let isDisabled = false
+    
+    // Disable past dates
+    if (d < today) {
+      isDisabled = true
+    }
+    
+    // For check-out, disable dates before or on check-in date
+    if (type === 'checkOut' && booking.value.checkIn) {
+      const checkInDate = new Date(booking.value.checkIn)
+      checkInDate.setHours(0, 0, 0, 0)
+      if (d <= checkInDate) {
+        isDisabled = true
+      }
+    }
+
     days.push({
       label: i,
-      date: new Date(year, month, i),
-      disabled: false,
+      date: d,
+      disabled: isDisabled,
       key: `curr-${i}`
     })
   }
@@ -599,9 +531,10 @@ const getCalendarDays = (monthDate) => {
   // Next month padding
   const remaining = 42 - days.length
   for (let i = 1; i <= remaining; i++) {
+    const d = new Date(year, month + 1, i)
     days.push({
       label: i,
-      date: new Date(year, month + 1, i),
+      date: d,
       disabled: true,
       key: `next-${i}`
     })
@@ -762,8 +695,9 @@ const bookNow = async () => {
           totalAmount: paymentResult.amount ?? Math.round(finalAmount)
         }))
 
-        // Step 3: Go directly to PayOS checkout page
-        window.location.assign(paymentResult.sessionUrl)
+        // Step 3: Go to internal checkout page first
+        const query = paymentResult.sessionId ? { orderCode: paymentResult.sessionId } : {}
+        router.push({ path: '/payment/checkout', query })
       } else {
         console.error('❌ Payment session creation failed:', paymentResult)
         const backendMessage = paymentResult?.message ? `\nChi tiết: ${paymentResult.message}` : ''
@@ -856,213 +790,9 @@ const calculateTotalAmount = () => {
   background-color: #FCFBF7;
   min-height: 100vh;
   color: #1A1A1A;
+  padding-top: 84px;
 }
 
-/* Header */
-.header {
-  padding: 20px 0;
-  background: transparent;
-}
-.header-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.logo-icon {
-  background-color: #614638;
-  color: white;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 1.2rem;
-}
-.logo-text {
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: #1A1A1A;
-}
-.nav-links {
-  display: flex;
-  gap: 30px;
-}
-.nav-links a {
-  text-decoration: none;
-  color: #666;
-  font-size: 0.95rem;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-.nav-links a:hover {
-  color: #1A1A1A;
-}
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-.icon-btn {
-  background: none;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.9rem;
-  color: #1A1A1A;
-  cursor: pointer;
-}
-.login-btn {
-  background-color: transparent;
-  color:  #614638;
-  text-decoration: none;
-  padding: 10px 20px;
-  border-radius: 50px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: background-color 0.2s, color 0.2s;
-}
-.register-btn {
-  background-color: #614638;
-  color: white;
-  text-decoration: none;
-  padding: 10px 24px;
-  border-radius: 50px;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-/* User Menu - Authenticated Header */
-.nav-link-action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: transparent;
-  color: #614638;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
-  text-decoration: none;
-}
-
-.nav-link-action:hover {
-  background-color: #F5F1EB;
-}
-
-.nav-link-action svg {
-  width: 20px;
-  height: 20px;
-  stroke: currentColor;
-}
-
-.user-menu {
-  position: relative;
-}
-
-.user-icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: transparent;
-  border: none;
-  color: #614638;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.user-icon-btn:hover {
-  background-color: #F5F1EB;
-}
-
-.user-icon-btn svg {
-  width: 20px;
-  height: 20px;
-  stroke: currentColor;
-}
-
-.dropdown-menu-header {
-  position: absolute;
-  top: calc(100% + 0.5rem);
-  right: 0;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  min-width: 200px;
-  overflow: hidden;
-  animation: slideDown 0.2s ease;
-  z-index: 1000;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dropdown-header {
-  padding: 1rem 1.25rem;
-  font-weight: 600;
-  color: #333;
-  border-bottom: 1px solid #f0f0f0;
-  font-size: 0.95rem;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.25rem;
-  color: #333;
-  text-decoration: none;
-  transition: background 0.2s;
-  font-size: 0.95rem;
-}
-
-.dropdown-item:hover {
-  background: #f5f7fa;
-}
-
-.dropdown-item svg {
-  width: 18px;
-  height: 18px;
-  stroke: currentColor;
-  flex-shrink: 0;
-}
-
-.dropdown-item.logout {
-  color: #e74c3c;
-  font-weight: 500;
-}
-
-.dropdown-item.logout:hover {
-  background: #ffebee;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: #f0f0f0;
-  margin: 0.5rem 0;
-}
 
 
 /* Container */
