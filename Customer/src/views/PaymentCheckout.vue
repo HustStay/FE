@@ -10,30 +10,26 @@
               <h1>Quét mã QR để thanh toán</h1>
               <p>Mở ứng dụng ngân hàng hoặc ví điện tử để quét mã bên dưới.</p>
             </div>
-
-            <button class="refresh-btn" @click="refreshPayment">
-              ↻ Làm mới
-            </button>
           </div>
 
           <div v-if="loading" class="loading">Đang tải thông tin thanh toán...</div>
           <div v-else-if="errorMessage" class="error">{{ errorMessage }}</div>
 
           <template v-else>
+            <div class="amount-box">
+              <span>Số tiền cần thanh toán</span>
+              <strong>{{ formatPrice(totalAmount) }}</strong>
+            </div>
+
             <div class="payment-body">
               <div class="qr-col">
                 <div class="qr-box">
-                  <img v-if="qrUrl" :src="qrUrl" alt="PayOS QR" class="qr-image" />
-                  <div v-else class="qr-empty">Không có mã QR để hiển thị.</div>
+                  <img v-if="displayQrUrl" :src="displayQrUrl" alt="VietQR" class="qr-image" />
+                  <div v-else class="qr-empty">Không có thông tin QR để hiển thị.</div>
                 </div>
-                <div class="amount-box">
-                  <span>Số tiền cần thanh toán</span>
-                  <strong>{{ formatPrice(totalAmount) }}</strong>
-                </div>
-                <p class="qr-note">Mở ứng dụng ngân hàng hoặc ví điện tử để quét mã QR.</p>
-                <button class="ghost-btn" @click="downloadQr">⭳ Tải mã QR</button>
+                <p class="qr-note">Mở app ngân hàng và quét mã VietQR để thanh toán ngay.</p>
                 <button class="payos-btn" @click="openPayOSPage" :disabled="redirecting">
-                  {{ redirecting ? 'Đang chuyển sang PayOS...' : 'Thanh toán ngay (PayOS)' }}
+                  {{ redirecting ? 'Đang chuyển sang PayOS...' : 'Mở trang PayOS' }}
                 </button>
               </div>
 
@@ -43,15 +39,6 @@
                     <span>Ngân hàng</span>
                     <strong>{{ displayBankName }}</strong>
                   </div>
-                  <button class="copy-btn" @click="copyToClipboard(displayBankName, 'ngân hàng')">Sao chép</button>
-                </div>
-
-                <div class="info-item">
-                  <div>
-                    <span>Số tài khoản</span>
-                    <strong>{{ displayAccountNumber }}</strong>
-                  </div>
-                  <button class="copy-btn" @click="copyToClipboard(displayAccountNumber, 'số tài khoản')">Sao chép</button>
                 </div>
 
                 <div class="info-item">
@@ -64,6 +51,14 @@
 
                 <div class="info-item">
                   <div>
+                    <span>Số tài khoản</span>
+                    <strong>{{ displayAccountNumber }}</strong>
+                  </div>
+                  <button class="copy-btn" @click="copyToClipboard(displayAccountNumber, 'số tài khoản')">Sao chép</button>
+                </div>
+
+                <div class="info-item">
+                  <div>
                     <span>Số tiền</span>
                     <strong>{{ formatPrice(totalAmount) }}</strong>
                   </div>
@@ -72,7 +67,7 @@
 
                 <div class="info-item">
                   <div>
-                    <span>Nội dung chuyển khoản</span>
+                    <span>Nội dung</span>
                     <strong>{{ displayTransferContent }}</strong>
                   </div>
                   <button class="copy-btn" @click="copyToClipboard(displayTransferContent, 'nội dung chuyển khoản')">Sao chép</button>
@@ -83,11 +78,7 @@
             <p v-if="copiedField" class="copy-state">Đã sao chép {{ copiedField }}.</p>
 
             <div class="notice-box">
-              <p><strong>Lưu ý:</strong></p>
-              <ul>
-                <li>Vui lòng giữ nguyên nội dung chuyển khoản để hệ thống tự đối soát.</li>
-                <li>Sau khi thanh toán thành công, PayOS sẽ tự động chuyển về trang xác nhận.</li>
-              </ul>
+              <p><strong>Lưu ý:</strong> Nhập chính xác số tiền và nội dung chuyển khoản để hệ thống tự đối soát.</p>
             </div>
           </template>
         </section>
@@ -142,8 +133,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import * as vietqrPackage from 'vietqr'
 import Navbar from '@/components/Navbar.vue'
 import { apiFetch } from '../utils/apiClient.js'
 
@@ -154,14 +146,20 @@ const loading = ref(true)
 const redirecting = ref(false)
 const errorMessage = ref('')
 const copiedField = ref('')
-const DEFAULT_PAYOS_CHECKOUT_URL = 'https://pay.payos.vn/web/4ef6cb9ca85040f09e8ae3e99c659547/'
+const VIETQR_CLIENT_ID = import.meta.env.VITE_VIETQR_CLIENT_ID || 'local-client-id'
+const VIETQR_API_KEY = import.meta.env.VITE_VIETQR_API_KEY || 'local-api-key'
 
 const paymentInfo = ref({
   bookingId: null,
   orderCode: null,
   amount: 0,
   checkoutUrl: '',
-  qrCode: '',
+  bin: '',
+  qrUrl: '',
+  paymentLinkData: null,
+  data: null,
+  bankBin: '',
+  bankCode: '',
   bankName: '',
   accountNumber: '',
   accountName: '',
@@ -197,19 +195,121 @@ const asNumber = (value, fallback = 0) => {
 }
 
 const payosCheckoutUrl = computed(() => {
-  return pickFirst(paymentInfo.value.checkoutUrl, route.query.checkoutUrl, DEFAULT_PAYOS_CHECKOUT_URL)
+  return pickFirst(paymentInfo.value.checkoutUrl, route.query.checkoutUrl)
 })
 
-const qrUrl = computed(() => {
-  if (paymentInfo.value.qrCode) return paymentInfo.value.qrCode
-  if (!payosCheckoutUrl.value) return ''
-  return `https://api.qrserver.com/v1/create-qr-code/?size=420x420&data=${encodeURIComponent(payosCheckoutUrl.value)}`
-})
+const vietQrClient = vietqrPackage?.VietQR || vietqrPackage?.default?.VietQR
+  ? new (vietqrPackage?.VietQR || vietqrPackage?.default?.VietQR)({
+      clientID: VIETQR_CLIENT_ID,
+      apiKey: VIETQR_API_KEY
+    })
+  : null
 
-const displayBankName = computed(() => pickFirst(paymentInfo.value.bankName, 'PayOS / VietQR'))
-const displayAccountNumber = computed(() => pickFirst(paymentInfo.value.accountNumber, 'Theo thông tin trên PayOS'))
-const displayAccountName = computed(() => pickFirst(paymentInfo.value.accountName, 'Theo thông tin trên PayOS'))
-const displayTransferContent = computed(() => pickFirst(paymentInfo.value.transferContent, `BOOKING-${paymentInfo.value.orderCode || ''}`))
+const displayBankName = computed(() => pickFirst(paymentInfo.value.bankName, 'Theo thông tin PayOS'))
+const displayAccountNumber = computed(() => pickFirst(paymentInfo.value.accountNumber, 'Theo thông tin PayOS'))
+const displayAccountName = computed(() => pickFirst(paymentInfo.value.accountName, 'Theo thông tin PayOS'))
+const displayTransferContent = computed(() =>
+  pickFirst(paymentInfo.value.transferContent, `BOOKING-${paymentInfo.value.orderCode || ''}`)
+)
+
+const hasPrimitiveValue = (value) => {
+  if (value === undefined || value === null) return false
+  if (typeof value === 'object') return false
+  return String(value).trim() !== ''
+}
+
+const pickPrimitive = (...values) => {
+  for (const value of values) {
+    if (!hasPrimitiveValue(value)) continue
+    return value
+  }
+  return ''
+}
+
+const tryParseJsonString = (value) => {
+  if (typeof value !== 'string') return null
+  const trimmed = value.trim()
+  if (!trimmed || (!trimmed.startsWith('{') && !trimmed.startsWith('['))) return null
+  try {
+    const parsed = JSON.parse(trimmed)
+    return parsed && typeof parsed === 'object' ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+const findDeepValue = (payload, keyCandidates = []) => {
+  if (!payload || typeof payload !== 'object') return ''
+
+  const queue = [payload]
+  const visited = new Set()
+
+  while (queue.length > 0) {
+    const current = queue.shift()
+    if (!current || typeof current !== 'object' || visited.has(current)) continue
+    visited.add(current)
+
+    for (const key of keyCandidates) {
+      if (hasPrimitiveValue(current[key])) return current[key]
+    }
+
+    for (const value of Object.values(current)) {
+      if (value && typeof value === 'object' && !visited.has(value)) {
+        queue.push(value)
+        continue
+      }
+
+      const parsed = tryParseJsonString(value)
+      if (parsed && !visited.has(parsed)) {
+        queue.push(parsed)
+      }
+    }
+  }
+
+  return ''
+}
+
+const getPaymentField = (payload, keyCandidates, fallback = '') => {
+  return pickPrimitive(findDeepValue(payload, keyCandidates), fallback)
+}
+
+const PAYMENT_KEYS = {
+  orderCode: ['orderCode', 'order_code', 'sessionId', 'session_id'],
+  amount: ['amount', 'totalAmount', 'total_amount', 'price'],
+  checkoutUrl: ['checkoutUrl', 'checkout_url', 'sessionUrl', 'session_url', 'paymentUrl', 'payment_url'],
+  qrCode: ['qrCode', 'qr_code', 'qrData', 'qr_data'],
+  qrUrl: ['qrUrl', 'qr_url', 'qrCodeUrl', 'qr_code_url'],
+  checkoutQrCode: ['checkoutQrCode', 'checkout_qr_code'],
+  bankBin: ['bankBin', 'bank_bin', 'acqId', 'acq_id', 'bin', 'bankId', 'bank_id', 'binCode', 'bin_code'],
+  bankCode: ['bankCode', 'bank_code', 'shortName', 'short_name', 'bankShortName', 'bank_short_name'],
+  bankName: ['bankName', 'bank_name', 'bankNameVi', 'bank_name_vi', 'binName', 'bin_name'],
+  accountNumber: ['accountNumber', 'account_number', 'accountNo', 'account_no'],
+  accountName: ['accountName', 'account_name'],
+  transferContent: ['transferContent', 'transfer_content', 'description', 'desc', 'content', 'addInfo', 'add_info']
+}
+
+const mergePaymentInfo = (payload, fallbackOrderCode = '') => {
+  const prev = paymentInfo.value
+
+  const next = {
+    bookingId: getPaymentField(payload, ['bookingId', 'booking_id'], prev.bookingId),
+    orderCode: pickPrimitive(getPaymentField(payload, PAYMENT_KEYS.orderCode), fallbackOrderCode, prev.orderCode),
+    amount: asNumber(getPaymentField(payload, PAYMENT_KEYS.amount, prev.amount), prev.amount),
+    checkoutUrl: getPaymentField(payload, PAYMENT_KEYS.checkoutUrl, prev.checkoutUrl),
+    bin: getPaymentField(payload, ['bin', 'bankBin', 'bank_bin'], prev.bin),
+    qrUrl: getPaymentField(payload, PAYMENT_KEYS.qrUrl, prev.qrUrl),
+    paymentLinkData: payload?.paymentLinkData ?? prev.paymentLinkData,
+    data: payload?.data ?? prev.data,
+    bankBin: getPaymentField(payload, PAYMENT_KEYS.bankBin, prev.bankBin),
+    bankCode: getPaymentField(payload, PAYMENT_KEYS.bankCode, prev.bankCode),
+    bankName: getPaymentField(payload, PAYMENT_KEYS.bankName, prev.bankName),
+    accountNumber: getPaymentField(payload, PAYMENT_KEYS.accountNumber, prev.accountNumber),
+    accountName: getPaymentField(payload, PAYMENT_KEYS.accountName, prev.accountName),
+    transferContent: getPaymentField(payload, PAYMENT_KEYS.transferContent, prev.transferContent)
+  }
+
+  paymentInfo.value = next
+}
 
 const roomSubtotal = computed(() => asNumber(bookingSummary.value.roomSubtotal, asNumber(paymentInfo.value.amount)))
 const taxFee = computed(() => asNumber(bookingSummary.value.taxFee))
@@ -218,6 +318,34 @@ const totalAmount = computed(() => {
   const summaryTotal = asNumber(bookingSummary.value.totalAmount)
   if (summaryTotal > 0) return summaryTotal
   return asNumber(paymentInfo.value.amount)
+})
+
+const generatedVietQrUrl = computed(() => {
+  if (!vietQrClient) return ''
+
+  const bank = String(pickFirst(paymentInfo.value.bin, paymentInfo.value.bankBin, paymentInfo.value.bankCode)).trim()
+  const accountNumber = String(paymentInfo.value.accountNumber || '').replace(/\s+/g, '')
+  const amount = Math.round(asNumber(totalAmount.value || paymentInfo.value.amount))
+  const memo = displayTransferContent.value
+  const accountName = displayAccountName.value
+
+  if (!bank || !accountNumber || !amount || !memo) return ''
+
+  const generated = vietQrClient.genQuickLink({
+    bank,
+    accountName,
+    accountNumber,
+    amount: String(amount),
+    memo,
+    template: 'compact2',
+    media: '.jpg'
+  })
+
+  return typeof generated === 'string' ? generated : ''
+})
+
+const displayQrUrl = computed(() => {
+  return generatedVietQrUrl.value || paymentInfo.value.qrUrl
 })
 
 const formatPrice = (price) => {
@@ -251,28 +379,8 @@ const copyToClipboard = async (value, label) => {
   }
 }
 
-const downloadQr = () => {
-  if (!qrUrl.value) return
-  const link = document.createElement('a')
-  link.href = qrUrl.value
-  link.download = `payos-qr-${paymentInfo.value.orderCode || 'payment'}.png`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-}
-
 const applySavedPayment = (raw) => {
-  paymentInfo.value = {
-    bookingId: raw.bookingId ?? paymentInfo.value.bookingId,
-    orderCode: raw.orderCode ?? paymentInfo.value.orderCode,
-    amount: asNumber(raw.amount, paymentInfo.value.amount),
-    checkoutUrl: raw.checkoutUrl ?? paymentInfo.value.checkoutUrl,
-    qrCode: raw.qrCode ?? raw.qrUrl ?? paymentInfo.value.qrCode,
-    bankName: raw.bankName ?? paymentInfo.value.bankName,
-    accountNumber: raw.accountNumber ?? paymentInfo.value.accountNumber,
-    accountName: raw.accountName ?? paymentInfo.value.accountName,
-    transferContent: raw.transferContent ?? raw.description ?? paymentInfo.value.transferContent
-  }
+  mergePaymentInfo(raw)
 
   bookingSummary.value = {
     hotelName: raw.hotelName ?? bookingSummary.value.hotelName,
@@ -287,25 +395,17 @@ const applySavedPayment = (raw) => {
     serviceFee: asNumber(raw.serviceFee, bookingSummary.value.serviceFee),
     totalAmount: asNumber(raw.totalAmount, bookingSummary.value.totalAmount)
   }
+  // renderPayosQr() sẽ tự kích hoạt qua watch(payosQrSource)
 }
 
 const applyPaymentFromApi = (payment, orderCode) => {
-  paymentInfo.value = {
-    bookingId: payment.bookingId ?? paymentInfo.value.bookingId,
-    orderCode: payment.sessionId || orderCode || paymentInfo.value.orderCode,
-    amount: asNumber(payment.amount, paymentInfo.value.amount),
-    checkoutUrl: payment.sessionUrl || payment.checkoutUrl || paymentInfo.value.checkoutUrl,
-    qrCode: pickFirst(payment.qrCode, payment.qrCodeUrl, payment.qrUrl, payment.checkoutQrCode, paymentInfo.value.qrCode),
-    bankName: pickFirst(payment.bankName, payment.bankNameVi, payment.bank?.name, payment.binName, paymentInfo.value.bankName),
-    accountNumber: pickFirst(payment.accountNumber, payment.accountNo, payment.account?.number, paymentInfo.value.accountNumber),
-    accountName: pickFirst(payment.accountName, payment.account?.name, paymentInfo.value.accountName),
-    transferContent: pickFirst(payment.transferContent, payment.description, payment.content, paymentInfo.value.transferContent)
-  }
+  mergePaymentInfo(payment, orderCode)
 
   bookingSummary.value = {
     ...bookingSummary.value,
     totalAmount: asNumber(payment.amount, bookingSummary.value.totalAmount || paymentInfo.value.amount)
   }
+  // renderPayosQr() sẽ tự kích hoạt qua watch(payosQrSource) khi paymentInfo.qrCode thay đổi
 }
 
 const fetchPaymentByOrderCode = async (orderCode) => {
@@ -322,7 +422,7 @@ const fetchPaymentByOrderCode = async (orderCode) => {
 
   const payment = await response.json()
   applyPaymentFromApi(payment, orderCode)
-  return !!paymentInfo.value.checkoutUrl
+  return !!(paymentInfo.value.checkoutUrl || payosQrSource.value)
 }
 
 const openPayOSPage = async () => {
@@ -356,14 +456,14 @@ const loadPaymentInfo = async () => {
     }
 
     const resolvedOrderCode = paymentInfo.value.orderCode || orderCodeFromQuery
-    if (!resolvedOrderCode && !payosCheckoutUrl.value) {
+    if (!resolvedOrderCode && !payosCheckoutUrl.value && !payosQrSource.value) {
       errorMessage.value = 'Không tìm thấy thông tin phiên thanh toán.'
       return
     }
 
     if (resolvedOrderCode) {
       const loaded = await fetchPaymentByOrderCode(resolvedOrderCode)
-      if (!loaded && !payosCheckoutUrl.value) {
+      if (!loaded && !payosQrSource.value) {
         errorMessage.value = 'Không thể tải thông tin phiên thanh toán.'
       }
     }
@@ -463,8 +563,9 @@ onMounted(() => {
 
 .payment-body {
   display: grid;
-  grid-template-columns: minmax(290px, 0.95fr) minmax(0, 1.55fr);
+  grid-template-columns: minmax(290px, 0.95fr) minmax(0, 1.2fr);
   gap: 1.3rem;
+  margin-top: 1rem;
 }
 
 .qr-col {
@@ -484,10 +585,9 @@ onMounted(() => {
 }
 
 .qr-image {
-  width: min(100%, 320px);
-  aspect-ratio: 1;
-  object-fit: contain;
+  width: min(100%, 430px);
   border-radius: 12px;
+  object-fit: contain;
   background: #fff;
 }
 
@@ -522,21 +622,61 @@ onMounted(() => {
   font-size: 0.95rem;
 }
 
-.ghost-btn,
+.info-col {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.info-item {
+  background: #f2ede5;
+  border: 1px solid #ddd4c7;
+  border-radius: 16px;
+  padding: 0.8rem 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.info-item span {
+  display: block;
+  color: #6f6357;
+  font-size: 0.95rem;
+}
+
+.info-item strong {
+  display: block;
+  margin-top: 0.15rem;
+  color: #211a13;
+  font-size: 1.08rem;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.copy-btn {
+  border: none;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #d9f5e6;
+  color: #0a6d42;
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+}
+
+.copy-state {
+  margin: 0.9rem 0 0;
+  color: #2f7d55;
+  font-weight: 600;
+}
+
 .payos-btn,
-.copy-btn,
 .done-btn {
   border: none;
   border-radius: 999px;
   font-weight: 700;
   cursor: pointer;
-}
-
-.ghost-btn {
-  background: #f0ece4;
-  color: #31271e;
-  border: 1px solid #ddd3c6;
-  padding: 0.72rem 1rem;
 }
 
 .payos-btn {
@@ -550,52 +690,6 @@ onMounted(() => {
   cursor: wait;
 }
 
-.info-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.info-item {
-  background: #f2ede5;
-  border: 1px solid #ddd4c7;
-  border-radius: 18px;
-  padding: 0.9rem 1.05rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.info-item span {
-  display: block;
-  color: #6c6155;
-  font-size: 0.95rem;
-}
-
-.info-item strong {
-  display: block;
-  margin-top: 0.2rem;
-  color: #211a13;
-  font-size: 1.02rem;
-  word-break: break-word;
-}
-
-.copy-btn {
-  background: #e7eee6;
-  color: #355143;
-  border: 1px solid #d4e0d2;
-  padding: 0.56rem 0.95rem;
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
-
-.copy-state {
-  margin: 0.9rem 0 0;
-  color: #3a6d4d;
-  font-weight: 600;
-}
-
 .notice-box {
   margin-top: 1rem;
   border: 1px dashed #c8bba9;
@@ -605,16 +699,8 @@ onMounted(() => {
 }
 
 .notice-box p {
-  margin: 0 0 0.5rem;
-  color: #3f3326;
-}
-
-.notice-box ul {
   margin: 0;
-  padding-left: 1.1rem;
-  color: #5f5245;
-  display: grid;
-  gap: 0.4rem;
+  color: #3f3326;
 }
 
 .summary-card {
@@ -771,7 +857,7 @@ onMounted(() => {
   }
 
   .qr-image {
-    width: min(100%, 280px);
+    width: min(100%, 320px);
   }
 
   .total-line strong {

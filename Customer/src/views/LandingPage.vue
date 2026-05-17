@@ -92,7 +92,6 @@
           <div>
             <h2 class="section-title">Những chốn dừng chân được yêu mến</h2>
           </div>
-          <a href="#" class="view-all">Xem tất cả &rarr;</a>
         </div>
 
         <div class="hotel-grid">
@@ -149,7 +148,7 @@
           
           <div class="hotel-card small">
             <div class="card-img-wrapper">
-              <img src="https://images.unsplash.com/photo-1542314831-c6a4d27d66f6?w=400" alt="Pinewood Mountain Lodge" />
+              <img src="https://cdn.xanhsm.com/2025/03/4777981c-melia-ba-vi-mountain-retreat-2.jpg" alt="Pinewood Mountain Lodge" />
               <div class="card-rating">
                 ★ 4.6
               </div>

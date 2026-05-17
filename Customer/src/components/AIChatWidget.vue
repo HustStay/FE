@@ -29,14 +29,9 @@
                 <circle cx="12" cy="8" r="4"/>
                 <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
               </svg>
-              <span class="ai-online-dot"></span>
             </div>
             <div class="ai-header-info">
               <h3>Sandy — Trợ lý du lịch</h3>
-              <span class="ai-status">
-                <span class="status-dot"></span>
-                Đang trực tuyến · Phản hồi tức thì
-              </span>
             </div>
           </div>
         </div>
