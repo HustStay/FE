@@ -718,4 +718,11 @@ onMounted(() => {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 16px;
+  }
+}
 </style>

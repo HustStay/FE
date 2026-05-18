@@ -1379,13 +1379,13 @@ onUnmounted(() => {
   background: #b0b0b0;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1280px) {
   .chat-container {
     grid-template-columns: 320px 1fr;
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1024px) {
   .main-content {
     margin-left: 0;
   }
@@ -1402,6 +1402,74 @@ onUnmounted(() => {
   .messages-panel {
     height: calc(100vh - 560px);
     min-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .message-bubble {
+    max-width: 80%;
+  }
+
+  .conversations-panel {
+    height: 260px;
+  }
+}
+
+@media (max-width: 640px) {
+  .chat-container {
+    gap: 0.75rem;
+  }
+
+  .conversations-panel {
+    height: 220px;
+  }
+
+  .messages-panel {
+    min-height: 320px;
+  }
+
+  .input-wrapper textarea {
+    font-size: 0.9rem;
+    padding: 0.75rem;
+  }
+
+  .send-btn,
+  .file-upload-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 0.75rem;
+  }
+
+  .panel-header {
+    padding: 1rem;
+  }
+
+  .conversation-item {
+    padding: 0.75rem 1rem;
+  }
+
+  .avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  .message-bubble {
+    max-width: 90%;
+    padding: 0.75rem 1rem;
   }
 }
 

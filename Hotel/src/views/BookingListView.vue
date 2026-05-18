@@ -619,4 +619,11 @@ const deleteBooking = (id) => {
     flex-direction: column;
   }
 }
+
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 16px;
+  }
+}
 </style>

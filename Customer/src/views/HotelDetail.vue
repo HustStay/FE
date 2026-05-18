@@ -1366,7 +1366,7 @@ const calculateTotalAmount = () => {
   color: #614638;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .content-split {
     grid-template-columns: 1fr;
   }
@@ -1401,6 +1401,48 @@ const calculateTotalAmount = () => {
     left: 0;
     right: 0;
     width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .hotel-name {
+    font-size: 1.6rem;
+  }
+  .main-container {
+    padding: 16px 16px 60px;
+  }
+  .gallery-main img {
+    height: 240px;
+  }
+  .booking-card {
+    padding: 20px 16px;
+  }
+  .section-title {
+    font-size: 1.2rem;
+  }
+  .amenity-pill {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hotel-name {
+    font-size: 1.4rem;
+  }
+  .price-main {
+    font-size: 1.3rem;
+  }
+  .gallery-main img {
+    height: 200px;
+    border-radius: 16px;
+  }
+  .comment-form-modern {
+    padding: 16px;
+  }
+  .review-card-modern {
+    flex-direction: column;
+    gap: 10px;
   }
 }
 </style>

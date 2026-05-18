@@ -812,7 +812,7 @@ onMounted(() => {
   font-size: 1.1rem;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1280px) {
   .summary-card h2 {
     font-size: 1.7rem;
   }
@@ -826,7 +826,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 1024px) {
   .checkout-layout {
     grid-template-columns: 1fr;
   }
@@ -836,7 +836,7 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .checkout-shell {
     padding-top: 5.5rem;
   }
@@ -862,6 +862,52 @@ onMounted(() => {
 
   .total-line strong {
     font-size: 2.1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .checkout-shell {
+    padding-top: 5rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .payment-card,
+  .summary-card {
+    padding: 1rem;
+    border-radius: 14px;
+  }
+
+  .summary-card h2 {
+    font-size: 1.3rem;
+  }
+
+  .total-line strong {
+    font-size: 1.7rem;
+  }
+
+  .copy-btn {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .amount-box strong {
+    font-size: 1.2rem;
+  }
+
+  .info-item strong {
+    font-size: 0.95rem;
+  }
+
+  .done-btn {
+    font-size: 1rem;
+    padding: 0.8rem;
+  }
+
+  .payos-btn {
+    font-size: 0.9rem;
   }
 }
 </style>

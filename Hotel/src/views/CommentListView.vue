@@ -520,6 +520,13 @@ const getInitials = (name) => {
 }
 
 /* Responsive */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 0;
+    padding: 24px;
+  }
+}
+
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
@@ -541,6 +548,37 @@ const getInitials = (name) => {
   .star-rating {
     width: 100%;
     margin-top: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .content-header h1 {
+    font-size: 24px;
+  }
+
+  .comment-card {
+    padding: 14px;
+  }
+
+  .customer-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-header h1 {
+    font-size: 20px;
+  }
+
+  .search-box input {
+    font-size: 13px;
+    padding: 10px 12px 10px 42px;
+  }
+
+  .comment-body {
+    padding: 12px;
   }
 }
 </style>

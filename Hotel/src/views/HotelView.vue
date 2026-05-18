@@ -869,4 +869,11 @@ button:disabled {
     font-size: 24px;
   }
 }
+
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 16px;
+  }
+}
 </style>
