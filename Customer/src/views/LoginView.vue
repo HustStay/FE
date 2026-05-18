@@ -645,7 +645,17 @@ const handleRegister = async () => {
 }
 
 /* Responsive */
-@media (max-width: 968px) {
+@media (max-width: 1024px) {
+  .auth-container {
+    gap: 40px;
+  }
+
+  .auth-image-side {
+    min-height: 480px;
+  }
+}
+
+@media (max-width: 768px) {
   .auth-container {
     flex-direction: column !important;
     gap: 40px;
@@ -664,6 +674,47 @@ const handleRegister = async () => {
   .form-row {
     flex-direction: column;
     gap: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-page {
+    padding: 24px 16px;
+  }
+
+  .auth-image-side {
+    min-height: 220px;
+  }
+
+  .image-content {
+    padding: 24px;
+  }
+
+  .image-title {
+    font-size: 1.5rem;
+  }
+
+  .form-title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-page {
+    padding: 16px 12px;
+  }
+
+  .auth-image-side {
+    min-height: 180px;
+  }
+
+  .image-title {
+    font-size: 1.3rem;
+  }
+
+  .submit-button {
+    padding: 12px;
+    font-size: 0.95rem;
   }
 }
 </style>

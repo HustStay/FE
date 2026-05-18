@@ -277,4 +277,11 @@ const handleLogin = async () => {
     font-size: 14px;
   }
 }
+
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 16px;
+  }
+}
 </style>

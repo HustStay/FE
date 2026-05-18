@@ -738,12 +738,135 @@
   }
 }
 
+@media (max-width: 640px) {
+  .hero-card {
+    height: 420px;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .featured-section {
+    padding: 40px 0 60px;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+  }
+
+  .why-section {
+    padding: 60px 0;
+  }
+
+  .why-title {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-card {
+    height: 360px;
+  }
+
+  .hero-title {
+    font-size: 1.7rem;
+  }
+
+  .hero-content {
+    padding: 28px 16px 60px;
+  }
+
+  .search-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .header-container {
+    padding: 0 16px;
+  }
+
+  .why-card {
+    padding: 24px 20px;
+  }
+}
+
 /* Why Us Section */
 .why-section {
   background-color: #F7F5F2;
   padding: 80px 0;
   margin-top: 40px;
 }
+
+.why-header {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 48px;
+}
+
+.why-kicker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.why-title {
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: #1A1A1A;
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.why-card {
+  background: white;
+  border-radius: 24px;
+  padding: 32px;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+}
+
+.why-icon {
+  width: 56px;
+  height: 56px;
+  background-color: #F7F5F2;
+  color: #614638;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.why-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.why-card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 24px 0 12px;
+  color: #1A1A1A;
+}
+
+.why-card-desc {
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.6;
+}
+</style>
+
 
 .why-header {
   text-align: center;

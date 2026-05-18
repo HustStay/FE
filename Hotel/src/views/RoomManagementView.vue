@@ -1467,4 +1467,11 @@ const handleAddRoom = async () => {
     padding: 16px;
   }
 }
+
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 16px;
+  }
+}
 </style>

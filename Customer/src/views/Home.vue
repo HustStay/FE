@@ -1167,15 +1167,7 @@ const goToHotelDetail = (hotelId) => {
     }
 }
 
-@media (max-width: 900px) {
-    .hero-content {
-        padding: 40px 32px 80px;
-    }
 
-    .hero-title {
-        font-size: 2.8rem;
-    }
-}
 
 @media (max-width: 768px) {
     .hero-card {
@@ -1183,7 +1175,7 @@ const goToHotelDetail = (hotelId) => {
     }
 
     .hero-content {
-        padding: 32px 20px 70px;
+        padding: 40px 24px 70px;
     }
 
     .hero-title {

@@ -572,6 +572,14 @@ onMounted(() => {
 .btn-cancel:hover:not(:disabled) { background: #dc2626; }
 .btn-cancel:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; }
 
+@media (max-width: 1024px) {
+  .bookings-container {
+    padding: 90px 20px 60px;
+  }
+  .card-image-wrap { width: 180px; }
+  .card-side { width: 160px; }
+}
+
 @media (max-width: 768px) {
   .booking-card { flex-direction: column; }
   .card-image-wrap { width: 100%; height: 200px; }
@@ -579,5 +587,27 @@ onMounted(() => {
   .total-amount { text-align: left; }
   .header-row { flex-direction: column; gap: 16px; }
   .date-strip { flex-wrap: wrap; }
+}
+
+@media (max-width: 640px) {
+  .bookings-container {
+    padding: 80px 16px 48px;
+  }
+  .title { font-size: 1.6rem; }
+  .tabs { overflow-x: auto; }
+  .tab { padding: 10px 16px; font-size: 0.88rem; white-space: nowrap; }
+  .card-body { padding: 16px; }
+  .date-strip { padding: 10px 12px; gap: 8px; }
+  .modal-content { border-radius: 16px; }
+  .modal-image { height: 200px; }
+}
+
+@media (max-width: 480px) {
+  .title { font-size: 1.4rem; }
+  .btn-new-booking { padding: 10px 18px; font-size: 0.85rem; }
+  .total-amount { font-size: 1.1rem; }
+  .modal-title { font-size: 1.2rem; padding: 16px 16px 10px; }
+  .modal-details { padding: 14px 16px; }
+  .modal-actions { padding: 0 16px 16px; }
 }
 </style>

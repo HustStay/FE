@@ -217,4 +217,19 @@ onMounted(() => {
     width: 100%;
   }
 }
+
+@media (max-width: 480px) {
+  .result-shell {
+    padding: 4.5rem 0.6rem 1rem;
+  }
+
+  .status-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .info-box {
+    padding: 1rem;
+  }
+}
 </style>

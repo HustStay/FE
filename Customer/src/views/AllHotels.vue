@@ -891,7 +891,7 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1280px) {
   .search-bar {
     grid-template-columns: 1fr 1px 1fr;
     row-gap: 10px;
@@ -918,7 +918,11 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 768px) {
+  .all-hotels-main {
+    padding-top: 76px;
+  }
+
   .hotel-grid {
     grid-template-columns: 1fr;
   }
@@ -929,12 +933,6 @@ onMounted(() => {
 
   .hotel-overlay h3 {
     font-size: 1.6rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .all-hotels-main {
-    padding-top: 76px;
   }
 
   .search-bar {
@@ -953,6 +951,57 @@ onMounted(() => {
 
   .hotel-price strong {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .results-shell {
+    padding: 16px 12px 32px;
+  }
+
+  .filters-title {
+    font-size: 1.4rem;
+  }
+
+  .hotel-image {
+    height: 220px;
+  }
+
+  .hotel-overlay h3 {
+    font-size: 1.3rem;
+  }
+
+  .hotel-content {
+    padding: 10px 12px 12px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-bar {
+    padding: 8px;
+  }
+
+  .search-item input {
+    font-size: 0.9rem;
+  }
+
+  .search-btn {
+    height: 44px;
+    font-size: 0.9rem;
+  }
+
+  .hotel-price strong {
+    font-size: 1.3rem;
+  }
+
+  .detail-btn {
+    padding: 8px 14px;
+    font-size: 0.85rem;
   }
 }
 </style>
