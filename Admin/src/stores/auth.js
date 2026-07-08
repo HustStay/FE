@@ -24,7 +24,6 @@ export const useAuthStore = defineStore('auth', () => {
       const data = response.data
       
       if (data.token) {
-        // Kiểm tra role = 3 (Admin) mới cho đăng nhập
         if (data.role !== 3) {
           error.value = 'Bạn không có quyền truy cập hệ thống quản trị'
           return { success: false, message: error.value }

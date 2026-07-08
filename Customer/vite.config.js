@@ -24,14 +24,14 @@ export default defineConfig({
     proxy: {
       '/api': {
         // eslint-disable-next-line no-undef
-        target: process.env.API_GATEWAY_URL || 'https://api-gateway-310906765270.asia-southeast1.run.app',
+        target: process.env.API_GATEWAY_URL || 'http://localhost:1111',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       },
       // WebSocket proxy - routes SockJS/WS through Vite to avoid CORS & 403 from API Gateway
       '/chat-ws': {
         // eslint-disable-next-line no-undef
-        target: process.env.API_GATEWAY_URL || 'https://api-gateway-310906765270.asia-southeast1.run.app',
+        target: process.env.API_GATEWAY_URL || 'http://localhost:1111',
         changeOrigin: true,
         ws: true,
         rewrite: (path) => path.replace(/^\/chat-ws/, '')

@@ -17,7 +17,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
             <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
           </svg>
-          <input type="text" placeholder="Tìm kiếm theo tên khách, email hoặc số phòng..." v-model="searchQuery" />
+          <input type="text" placeholder="Tìm kiếm theo tên khách, số phòng..." v-model="searchQuery" />
         </div>
         <select class="filter-select" v-model="statusFilter">
           <option value="">Tất cả trạng thái</option>
@@ -118,6 +118,31 @@
         </div>
       </div>
     </main>
+
+    <!-- Custom Confirm Modal -->
+    <div class="modal-overlay" v-if="showConfirmModal" @click.self="cancelConfirm">
+      <div class="confirm-modal">
+        <div class="confirm-icon" :class="confirmActionType">
+          <svg v-if="confirmActionType === 'checkin'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14h-3v3h-2v-3H8v-2h3v-3h2v3h3v2z"/>
+          </svg>
+          <svg v-else-if="confirmActionType === 'checkout'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 14H8v-2h8v2z"/>
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+        </div>
+        <div class="confirm-content">
+          <h3>{{ confirmTitle }}</h3>
+          <p>{{ confirmMessage }}</p>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn-cancel" @click="cancelConfirm">Hủy</button>
+          <button class="btn-confirm" :class="confirmActionType" @click="executeConfirm">Xác nhận</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -125,10 +150,40 @@
 import { ref, computed, onMounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
 import { apiFetch } from '../utils/apiClient.js'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 const searchQuery = ref('')
 const statusFilter = ref('')
 const bookings = ref([])
+
+// Confirm Modal State
+const showConfirmModal = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmActionType = ref('delete')
+let confirmCallback = null
+
+const openConfirm = (title, message, type, callback) => {
+  confirmTitle.value = title
+  confirmMessage.value = message
+  confirmActionType.value = type
+  confirmCallback = callback
+  showConfirmModal.value = true
+}
+
+const cancelConfirm = () => {
+  showConfirmModal.value = false
+  confirmCallback = null
+}
+
+const executeConfirm = () => {
+  if (confirmCallback) {
+    confirmCallback()
+  }
+  cancelConfirm()
+}
 
 // Fetch bookings from API
 const fetchBookings = async () => {
@@ -144,7 +199,7 @@ const fetchBookings = async () => {
     })
 
     if (response.status === 401) {
-      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
       localStorage.removeItem('token')
       localStorage.removeItem('role')
       window.location.href = '/'
@@ -197,7 +252,7 @@ const fetchBookings = async () => {
     }
   } catch (error) {
     console.error('Fetch bookings error:', error)
-    alert('Có lỗi xảy ra khi tải danh sách booking!')
+    toast.error('Có lỗi xảy ra khi tải danh sách booking!')
   }
 }
 
@@ -226,76 +281,91 @@ const updateBookingStatus = (booking) => {
   // Có thể gọi API để cập nhật trạng thái
 }
 
-const checkInBooking = async (booking) => {
-  if (confirm(`Xác nhận check-in cho khách ${booking.customerName}?`)) {
-    try {
-      const token = localStorage.getItem('token')
-      const response = await apiFetch('/api/booking-service/checkInCheckOut', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          bookingId: booking.id,
-          action: 'CHECKED_IN'
+const checkInBooking = (booking) => {
+  openConfirm(
+    'Xác nhận Check-in',
+    `Bạn có chắc chắn muốn xác nhận check-in cho khách ${booking.customerName}?`,
+    'checkin',
+    async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await apiFetch('/api/booking-service/checkInCheckOut', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookingId: booking.id,
+            action: 'CHECKED_IN'
+          })
         })
-      })
 
-      const data = await response.json()
+        const data = await response.json()
 
-      if (response.ok && data.message === "Check-in/Check-out successful") {
-        booking.status = 'checkedin'
-        alert('Check-in thành công!')
-      } else {
-        alert('Check-in thất bại! ' + (data.message || ''))
+        if (response.ok && data.message === "Check-in/Check-out successful") {
+          booking.status = 'checkedin'
+          toast.success('Check-in thành công!')
+        } else {
+          toast.error('Check-in thất bại! ' + (data.message || ''))
+        }
+      } catch (error) {
+        console.error('Check-in error:', error)
+        toast.error('Có lỗi xảy ra khi check-in!')
       }
-    } catch (error) {
-      console.error('Check-in error:', error)
-      alert('Có lỗi xảy ra khi check-in!')
     }
-  }
+  )
 }
 
-const checkOutBooking = async (booking) => {
-  if (confirm(`Xác nhận check-out cho khách ${booking.customerName}?`)) {
-    try {
-      const token = localStorage.getItem('token')
-      const response = await apiFetch('/api/booking-service/checkInCheckOut', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          bookingId: booking.id,
-          action: 'CHECKED_OUT'
+const checkOutBooking = (booking) => {
+  openConfirm(
+    'Xác nhận Check-out',
+    `Bạn có chắc chắn muốn xác nhận check-out cho khách ${booking.customerName}?`,
+    'checkout',
+    async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await apiFetch('/api/booking-service/checkInCheckOut', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            bookingId: booking.id,
+            action: 'CHECKED_OUT'
+          })
         })
-      })
 
-      const data = await response.json()
+        const data = await response.json()
 
-      if (response.ok && data.message === "Check-in/Check-out successful") {
-        booking.status = 'checkedout'
-        alert('Check-out thành công!')
-      } else {
-        alert('Check-out thất bại! ' + (data.message || ''))
+        if (response.ok && data.message === "Check-in/Check-out successful") {
+          booking.status = 'checkedout'
+          toast.success('Check-out thành công!')
+        } else {
+          toast.error('Check-out thất bại! ' + (data.message || ''))
+        }
+      } catch (error) {
+        console.error('Check-out error:', error)
+        toast.error('Có lỗi xảy ra khi check-out!')
       }
-    } catch (error) {
-      console.error('Check-out error:', error)
-      alert('Có lỗi xảy ra khi check-out!')
     }
-  }
+  )
 }
 
 const deleteBooking = (id) => {
-  if (confirm('Bạn có chắc chắn muốn xóa booking này?')) {
-    const index = bookings.value.findIndex(b => b.id === id)
-    if (index !== -1) {
-      bookings.value.splice(index, 1)
-      alert('Đã xóa booking thành công!')
+  openConfirm(
+    'Xác nhận Xóa',
+    'Bạn có chắc chắn muốn xóa booking này không? Hành động này không thể hoàn tác.',
+    'delete',
+    () => {
+      const index = bookings.value.findIndex(b => b.id === id)
+      if (index !== -1) {
+        bookings.value.splice(index, 1)
+        toast.success('Đã xóa booking thành công!')
+      }
     }
-  }
+  )
 }
 </script>
 
@@ -625,5 +695,141 @@ const deleteBooking = (id) => {
   .main-content {
     padding: 16px;
   }
+}
+
+/* Confirm Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.confirm-modal {
+  background: white;
+  width: 90%;
+  max-width: 420px;
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirm-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.confirm-icon.checkin {
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.confirm-icon.checkout {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.confirm-icon.delete {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.confirm-content h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.confirm-content p {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 28px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.confirm-actions button {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.btn-confirm {
+  border: none;
+  color: white;
+}
+
+.btn-confirm.checkin {
+  background: #10b981;
+}
+
+.btn-confirm.checkin:hover {
+  background: #059669;
+}
+
+.btn-confirm.checkout {
+  background: #3b82f6;
+}
+
+.btn-confirm.checkout:hover {
+  background: #2563eb;
+}
+
+.btn-confirm.delete {
+  background: #ef4444;
+}
+
+.btn-confirm.delete:hover {
+  background: #dc2626;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 </style>

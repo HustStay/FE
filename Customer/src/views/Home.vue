@@ -107,17 +107,7 @@
             </div>
         </section>
 
-        <!-- Quick Links -->
-        <section class="quick-links">
-            <div class="container">
-                <span class="quick-label">Tìm nhanh:</span>
-                <div class="tags">
-                    <button class="tag" v-for="tag in quickTags" :key="tag">
-                        {{ tag }}
-                    </button>
-                </div>
-            </div>
-        </section>
+        
 
         <!-- Search Results Section -->
         <section v-if="isSearching || searchResults.length > 0 || searchMessage" class="section search-results">
@@ -154,9 +144,7 @@
                             <div v-if="hotel.totalRooms" class="hotel-meta">
                                 Tổng {{ hotel.totalRooms }} phòng
                             </div>
-                            <!-- <div class="card-actions">
-                                <button class="btn-detail" @click.prevent="goToHotelDetail(hotel.id)">Xem chi tiết</button>
-                            </div> -->
+                            
                         </div>
                     </div>
                 </div>
@@ -200,9 +188,7 @@
                             <div class="hotel-price">
                                 <span>{{ formatPrice(hotel.pricePerNight) }}</span> / đêm
                             </div>
-                            <!-- <div class="card-actions">
-                                <button class="btn-detail" @click.prevent="goToHotelDetail(hotel.id)">Xem chi tiết</button>
-                            </div> -->
+                            
                         </div>
                     </div>
                 </div>
@@ -283,8 +269,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
 import { apiFetch } from '../utils/apiClient.js'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
+const toast = useToast()
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -369,13 +357,13 @@ const formatPrice = (price) => {
 const handleSearch = async () => {
     // Validate search form
     if (!searchForm.value.location || !searchForm.value.checkIn || !searchForm.value.checkOut) {
-        alert('Vui lòng điền đầy đủ thông tin tìm kiếm')
+        toast.warning('Vui lòng điền đầy đủ thông tin tìm kiếm')
         return
     }
 
     // Validate dates
     if (new Date(searchForm.value.checkOut) <= new Date(searchForm.value.checkIn)) {
-        alert('Ngày trả phòng phải sau ngày nhận phòng')
+        toast.warning('Ngày trả phòng phải sau ngày nhận phòng')
         return
     }
 
@@ -450,7 +438,6 @@ const fetchHotels = async () => {
         const data = await response.json()
         console.log('Fetched hotels:', data)
         if (response.ok && data.hotels) {
-            // Map API data to component format
             featuredHotels.value = data.hotels.map(hotel => ({
                 id: hotel.hotelId,
                 name: hotel.hotelName,

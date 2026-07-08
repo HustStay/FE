@@ -45,7 +45,6 @@ export const getDownloadUrl = (fileUrl, fileName) => {
   // For Cloudinary URLs, add fl_attachment to force download
   if (fileUrl.includes('cloudinary.com')) {
     // Parse the URL to insert fl_attachment
-    // Format: https://res.cloudinary.com/{cloud}/raw/upload/v{version}/{folder}/{file}
     // Add fl_attachment:filename after /upload/
     const uploadIndex = fileUrl.indexOf('/upload/')
     if (uploadIndex !== -1) {

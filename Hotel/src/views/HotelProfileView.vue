@@ -99,11 +99,6 @@
                 <div class="image-overlay">
                   <span v-if="image.isCover" class="cover-badge">Ảnh bìa</span>
                   <div class="image-actions">
-                    <button v-if="!image.isCover" class="action-btn set-cover" @click="setCoverImage(index)" title="Đặt làm ảnh bìa">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-                      </svg>
-                    </button>
                     <button class="action-btn delete" @click="removeImage(index)" title="Xóa ảnh">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
@@ -126,6 +121,9 @@ import { ref, onMounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
 import { apiFetch } from '../utils/apiClient.js'
 import cloudinaryService from '../services/cloudinaryService.js'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 const isSaving = ref(false)
 const newAmenity = ref('')
@@ -197,7 +195,7 @@ const saveChanges = async () => {
     const hotelId = localStorage.getItem('hotelId')
     
     if (!hotelId) {
-       alert("Lỗi: Không tìm thấy hotelId");
+       toast.error("Lỗi: Không tìm thấy hotelId");
        isSaving.value = false;
        return;
     }
@@ -219,7 +217,7 @@ const saveChanges = async () => {
           finalImageUrls.push(uploadResult.url);
         } else {
           console.error("Upload failed for a file:", uploadResult.error);
-          alert("Có lỗi xảy ra khi upload ảnh!");
+          toast.error("Có lỗi xảy ra khi upload ảnh!");
           isSaving.value = false;
           return;
         }
@@ -260,16 +258,16 @@ const saveChanges = async () => {
     });
 
     if (res.ok) {
-      alert('Đã lưu thông tin hồ sơ khách sạn thành công!');
+      toast.success('Đã lưu thông tin hồ sơ khách sạn thành công!');
       await fetchHotelProfile(); // Refresh
     } else {
       const err = await res.json();
-      alert('Lỗi: ' + (err.message || 'Không thể lưu hồ sơ'));
+      toast.error('Lỗi: ' + (err.message || 'Không thể lưu hồ sơ'));
     }
 
   } catch (error) {
     console.error(error);
-    alert('Có lỗi xảy ra khi lưu thay đổi!');
+    toast.error('Có lỗi xảy ra khi lưu thay đổi!');
   } finally {
     isSaving.value = false;
   }

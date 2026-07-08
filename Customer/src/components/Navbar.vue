@@ -16,7 +16,7 @@
                 <div class="user-menu">
                     <a href="#" class="user-icon-link" @click.prevent="toggleMenu">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        <span class="user-label">Tài khoản</span>
+                        <span class="user-label">{{ userName || 'Tài khoản' }}</span>
                     </a>
                     <div v-if="showMenu" class="dropdown-menu">
                         <div class="dropdown-header">Tài khoản của tôi</div>
@@ -72,10 +72,12 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { apiFetch } from '../utils/apiClient.js'
 
 const router = useRouter()
 const showMenu = ref(false)
 const showMobileMenu = ref(false)
+const userName = ref('')
 
 const goToHome = () => {
     closeMobileMenu()
@@ -123,8 +125,29 @@ const goToBookings = () => {
     router.push('/bookings')
 }
 
-onMounted(() => {
+onMounted(async () => {
     document.addEventListener('click', closeMenu)
+    
+    const token = localStorage.getItem('token')
+    if (token) {
+        try {
+            const response = await apiFetch('/api/user-service/profile', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            if (response.ok) {
+                const data = await response.json()
+                if (data.message === "User found" && data.profile?.fullName) {
+                    userName.value = data.profile.fullName
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching user name for navbar:', error)
+        }
+    }
 })
 
 onUnmounted(() => {

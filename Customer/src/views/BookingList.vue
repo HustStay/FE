@@ -10,7 +10,6 @@
             <h1 class="title">Đặt phòng của tôi</h1>
             <p class="subtitle">Theo dõi mọi chuyến đi từ một nơi duy nhất.</p>
           </div>
-          <button class="btn-new-booking">Đặt chuyến mới</button>
         </div>
       </div>
 
@@ -24,7 +23,7 @@
         <div v-if="loading" class="loading"><p>Đang tải...</p></div>
         
         <div v-else-if="filteredBookings.length === 0" class="empty-state">
-          <h3>Không có đặt phòng nào</h3>
+          <h3>Không có phòng nào</h3>
           <p>Bạn chưa có đặt phòng nào trong mục này.</p>
         </div>
 
@@ -36,7 +35,13 @@
             </div>
             
             <div class="card-body">
-              <h3 class="hotel-name">{{ booking.hotelName }}</h3>
+              <div class="card-top-row">
+                <h3 class="hotel-name">{{ booking.hotelName }}</h3>
+                <!-- Badge trạng thái thanh toán -->
+                <span class="payment-badge" :class="booking.isPaid ? 'paid' : 'unpaid'">
+                  {{ booking.isPaid ? '✓ Đã thanh toán' : '⚠ Chưa thanh toán' }}
+                </span>
+              </div>
               <div class="info-row">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
                 <span>{{ booking.location }}</span>
@@ -62,17 +67,16 @@
               <div class="total-label">Tổng phí</div>
               <div class="total-amount">{{ booking.totalAmount ? booking.totalAmount.toLocaleString('vi-VN') + 'đ' : '—' }}</div>
               <button class="btn-detail" @click="showBookingDetail(booking)">Chi tiết →</button>
+              <!-- Nút Thanh toán ngay nếu chưa thanh toán -->
               <button
-                v-if="canPayBooking(booking)"
+                v-if="!booking.isPaid && (booking.status === 'CONFIRMED' || booking.status === 'PENDING')"
                 class="btn-pay-inline"
-                @click="goToPaymentCheckout(booking)"
-              >Thanh toán ngay</button>
-              <button 
-                v-if="booking.status === 'CONFIRMED' || booking.status === 'PENDING'"
-                class="btn-cancel-inline"
-                :disabled="!canCancelBooking(booking)"
-                @click="cancelBooking(booking)"
-              >Huỷ đặt phòng</button>
+                :disabled="payingBookingId === booking.id"
+                @click="payNow(booking)"
+              >
+                {{ payingBookingId === booking.id ? 'Đang xử lý...' : 'Thanh toán ngay' }}
+              </button>
+              
             </div>
           </div>
         </div>
@@ -110,19 +114,30 @@
               {{ selectedBooking.totalAmount ? selectedBooking.totalAmount.toLocaleString('vi-VN') + 'đ' : '—' }}
             </div>
           </div>
+          <div class="detail-row">
+            <div class="detail-label">Thanh toán</div>
+            <div class="detail-value">
+              <span class="payment-badge" :class="selectedBooking.isPaid ? 'paid' : 'unpaid'">
+                {{ selectedBooking.isPaid ? '✓ Đã thanh toán' : '⚠ Chưa thanh toán' }}
+              </span>
+            </div>
+          </div>
         </div>
         <div class="modal-actions">
+          <!-- Nút Thanh toán ngay trong modal -->
           <button
-            v-if="canPayBooking(selectedBooking)"
+            v-if="!selectedBooking.isPaid && (selectedBooking.status === 'CONFIRMED' || selectedBooking.status === 'PENDING')"
             class="btn-pay"
-            @click="goToPaymentCheckout(selectedBooking)"
-          >Thanh toán ngay</button>
+            :disabled="payingBookingId === selectedBooking.id"
+            @click="payNow(selectedBooking)"
+          >
+            {{ payingBookingId === selectedBooking.id ? 'Đang tạo liên kết thanh toán...' : 'Thanh toán ngay' }}
+          </button>
           <button 
             v-if="selectedBooking.status === 'CONFIRMED' || selectedBooking.status === 'PENDING'"
             class="btn-cancel" 
-            :disabled="!canCancelBooking(selectedBooking)"
             @click="cancelBooking(selectedBooking)"
-          >{{ canCancelBooking(selectedBooking) ? 'Hủy đặt phòng' : 'Không thể hủy (< 7 ngày)' }}</button>
+          >Hủy đặt phòng</button>
         </div>
       </div>
     </div>
@@ -134,12 +149,15 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
 import { apiFetch } from '../utils/apiClient.js'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
+const toast = useToast()
 const activeTab = ref('all')
 const bookings = ref([])
 const loading = ref(false)
 const selectedBooking = ref(null)
+const payingBookingId = ref(null) // theo dõi booking đang xử lý thanh toán
 
 const pickFirst = (...values) => {
   for (const value of values) {
@@ -221,7 +239,7 @@ const fetchBookings = async () => {
       if (data.bookings && Array.isArray(data.bookings)) {
         bookings.value = data.bookings.map(booking => {
           console.log('Mapping booking:', booking)
-          return {
+            return {
             id: booking.id,
             hotelId: booking.hotelId || booking.id,
             hotelName: booking.hotelName || 'Chưa có tên',
@@ -232,6 +250,7 @@ const fetchBookings = async () => {
             guests: booking.guests,
             status: booking.status,
             totalAmount: asNumber(booking.fee),
+            isPaid: booking.isPaid === true || booking.paymentStatus === 'PAID',
             orderCode: getBookingOrderCode(booking),
             checkoutUrl: getBookingCheckoutUrl(booking),
             roomSubtotal: asNumber(booking.fee),
@@ -352,18 +371,76 @@ const goToPaymentCheckout = (booking) => {
   router.push({ path: '/payment/checkout', query })
 }
 
+const payNow = async (booking) => {
+  if (payingBookingId.value) return
+  payingBookingId.value = booking.id
+
+  try {
+    const token = localStorage.getItem('token')
+    const nights = getNights(booking.checkInDate, booking.checkOutDate)
+    const amount = asNumber(booking.totalAmount)
+
+    const paymentData = {
+      bookingId: booking.id,
+      amount: Math.round(amount),
+      description: `Thanh toán đặt phòng ${booking.hotelName} - ${nights} đêm`,
+      customerName: localStorage.getItem('fullName') || 'Khách hàng',
+      customerEmail: localStorage.getItem('email') || '',
+      hotelName: booking.hotelName,
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate
+    }
+
+    console.log('💳 Creating PayOS payment link:', paymentData)
+
+    const paymentResponse = await apiFetch('/api/payment-service/payos/create-payment-link', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(paymentData)
+    })
+
+    const paymentResult = await paymentResponse.json().catch(() => ({}))
+
+    if (paymentResponse.ok && paymentResult.sessionUrl) {
+      sessionStorage.setItem('pendingPayment', JSON.stringify({
+        bookingId: booking.id,
+        amount: paymentResult.amount ?? Math.round(amount),
+        orderCode: paymentResult.sessionId,
+        checkoutUrl: paymentResult.sessionUrl,
+        qrCode: paymentResult.qrCode ?? '',
+        hotelName: booking.hotelName,
+        hotelImage: booking.hotelImage,
+        location: booking.location,
+        checkInDate: booking.checkInDate,
+        checkOutDate: booking.checkOutDate,
+        guests: asNumber(booking.guests, 1),
+        nights,
+        roomSubtotal: Math.round(amount),
+        taxFee: 0,
+        serviceFee: 0,
+        totalAmount: paymentResult.amount ?? Math.round(amount)
+      }))
+      window.location.assign(paymentResult.sessionUrl)
+    } else {
+      const msg = paymentResult?.message || 'Không thể tạo liên kết thanh toán'
+      toast.error(`Thanh toán thất bại: ${msg}`)
+    }
+  } catch (error) {
+    console.error('❌ Error creating payment:', error)
+    toast.error('Có lỗi xảy ra khi tạo thanh toán. Vui lòng thử lại.')
+  } finally {
+    payingBookingId.value = null
+  }
+}
+
 const canCancelBooking = (booking) => {
-  const now = new Date()
-  const checkInDate = new Date(booking.checkInDate)
-  const daysDiff = Math.floor((checkInDate - now) / (1000 * 60 * 60 * 24))
-  return daysDiff >= 7
+  return true
 }
 
 const cancelBooking = async (booking) => {
-  if (!canCancelBooking(booking)) {
-    alert('Không thể hủy đặt phòng trong vòng 7 ngày trước ngày nhận phòng')
-    return
-  }
 
   if (!confirm('Bạn có chắc chắn muốn hủy đặt phòng này?')) {
     return
@@ -387,22 +464,19 @@ const cancelBooking = async (booking) => {
     const data = await response.json()
     
     if (response.ok && data.message === 'Booking status updated successfully') {
-      alert('Hủy đặt phòng thành công')
+      toast.success('Hủy đặt phòng thành công')
       closeModal()
       fetchBookings() // Refresh bookings list
     } else {
-      alert(data.message || 'Hủy đặt phòng thất bại')
+      toast.error(data.message || 'Hủy đặt phòng thất bại')
     }
   } catch (error) {
     console.error('Error cancelling booking:', error)
-    alert('Có lỗi xảy ra khi hủy đặt phòng')
+    toast.error('Có lỗi xảy ra khi hủy đặt phòng')
   }
 }
 
-// const manageBooking = (booking) => {
 //   // Navigate to booking management or show modal
-//   console.log('Manage booking:', booking)
-// }
 
 onMounted(() => {
   fetchBookings()
@@ -519,6 +593,34 @@ onMounted(() => {
 }
 .btn-cancel-inline:hover:not(:disabled) { border-color: #c62828; color: #c62828; }
 .btn-cancel-inline:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Payment badge */
+.card-top-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.payment-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.payment-badge.paid {
+  background: rgba(16,185,129,0.12);
+  color: #059669;
+  border: 1px solid rgba(16,185,129,0.3);
+}
+.payment-badge.unpaid {
+  background: rgba(245,158,11,0.12);
+  color: #d97706;
+  border: 1px solid rgba(245,158,11,0.3);
+}
 
 /* Modal */
 .modal-overlay {

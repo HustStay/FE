@@ -98,6 +98,9 @@
 import { ref, computed, onMounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
 import { apiFetch } from '../utils/apiClient.js'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 const searchQuery = ref('')
 const starFilter = ref('')
@@ -120,7 +123,7 @@ const fetchComments = async () => {
     })
 
     if (response.status === 401) {
-      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
       localStorage.removeItem('token')
       localStorage.removeItem('role')
       window.location.href = '/'

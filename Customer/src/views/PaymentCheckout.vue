@@ -16,6 +16,12 @@
           <div v-else-if="errorMessage" class="error">{{ errorMessage }}</div>
 
           <template v-else>
+            <!-- Auto-redirect banner -->
+            <div v-if="autoRedirectCountdown > 0" class="redirect-banner">
+              <span>🔄 Đang chuyển đến trang thanh toán PayOS sau <strong>{{ autoRedirectCountdown }}</strong> giây...</span>
+              <button class="cancel-redirect-btn" @click="cancelRedirect">Huỷ</button>
+            </div>
+
             <div class="amount-box">
               <span>Số tiền cần thanh toán</span>
               <strong>{{ formatPrice(totalAmount) }}</strong>
@@ -24,12 +30,19 @@
             <div class="payment-body">
               <div class="qr-col">
                 <div class="qr-box">
-                  <img v-if="displayQrUrl" :src="displayQrUrl" alt="VietQR" class="qr-image" />
+                  <div v-if="qrLoading" class="qr-loading">
+                    <div class="qr-spinner"></div>
+                    <span>Đang tạo mã QR từ PayOS...</span>
+                  </div>
+                  <img v-else-if="displayQrUrl" :src="displayQrUrl" alt="PayOS QR Code" class="qr-image" />
                   <div v-else class="qr-empty">Không có thông tin QR để hiển thị.</div>
                 </div>
-                <p class="qr-note">Mở app ngân hàng và quét mã VietQR để thanh toán ngay.</p>
+                <p class="qr-note">
+                  <span v-if="payosQrDataUrl">✅ Mã QR được tạo trực tiếp từ PayOS — mở app ngân hàng và quét để thanh toán.</span>
+                  <span v-else>Mở app ngân hàng và quét mã VietQR để thanh toán ngay.</span>
+                </p>
                 <button class="payos-btn" @click="openPayOSPage" :disabled="redirecting">
-                  {{ redirecting ? 'Đang chuyển sang PayOS...' : 'Mở trang PayOS' }}
+                  {{ redirecting ? 'Đang chuyển sang PayOS...' : '🔗 Mở trang thanh toán PayOS' }}
                 </button>
               </div>
 
@@ -111,7 +124,7 @@
               <strong>{{ formatPrice(roomSubtotal) }}</strong>
             </div>
             <div class="line">
-              <span>Thuế & phí</span>
+              <span>Thuế &amp; phí</span>
               <strong>{{ formatPrice(taxFee) }}</strong>
             </div>
             <div class="line">
@@ -133,9 +146,10 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import * as vietqrPackage from 'vietqr'
+import QRCode from 'qrcode'
 import Navbar from '@/components/Navbar.vue'
 import { apiFetch } from '../utils/apiClient.js'
 
@@ -144,10 +158,16 @@ const router = useRouter()
 
 const loading = ref(true)
 const redirecting = ref(false)
+const qrLoading = ref(false)
 const errorMessage = ref('')
 const copiedField = ref('')
 const VIETQR_CLIENT_ID = import.meta.env.VITE_VIETQR_CLIENT_ID || 'local-client-id'
 const VIETQR_API_KEY = import.meta.env.VITE_VIETQR_API_KEY || 'local-api-key'
+
+// QR image được render từ EMV string của PayOS
+const payosQrDataUrl = ref('')
+const autoRedirectCountdown = ref(0)
+let countdownTimer = null
 
 const paymentInfo = ref({
   bookingId: null,
@@ -156,6 +176,7 @@ const paymentInfo = ref({
   checkoutUrl: '',
   bin: '',
   qrUrl: '',
+  qrCode: '',         // EMV QR string từ PayOS
   paymentLinkData: null,
   data: null,
   bankBin: '',
@@ -298,6 +319,7 @@ const mergePaymentInfo = (payload, fallbackOrderCode = '') => {
     checkoutUrl: getPaymentField(payload, PAYMENT_KEYS.checkoutUrl, prev.checkoutUrl),
     bin: getPaymentField(payload, ['bin', 'bankBin', 'bank_bin'], prev.bin),
     qrUrl: getPaymentField(payload, PAYMENT_KEYS.qrUrl, prev.qrUrl),
+    qrCode: getPaymentField(payload, PAYMENT_KEYS.qrCode, prev.qrCode),
     paymentLinkData: payload?.paymentLinkData ?? prev.paymentLinkData,
     data: payload?.data ?? prev.data,
     bankBin: getPaymentField(payload, PAYMENT_KEYS.bankBin, prev.bankBin),
@@ -319,6 +341,30 @@ const totalAmount = computed(() => {
   if (summaryTotal > 0) return summaryTotal
   return asNumber(paymentInfo.value.amount)
 })
+
+// Render QR từ EMV string của PayOS (ưu tiên hơn VietQR)
+const payosQrSource = computed(() => paymentInfo.value.qrCode || '')
+
+watch(payosQrSource, async (emvString) => {
+  if (!emvString) {
+    payosQrDataUrl.value = ''
+    return
+  }
+  qrLoading.value = true
+  try {
+    payosQrDataUrl.value = await QRCode.toDataURL(emvString, {
+      errorCorrectionLevel: 'M',
+      margin: 2,
+      width: 400,
+      color: { dark: '#0a3d62', light: '#ffffff' }
+    })
+  } catch (err) {
+    console.error('❌ Failed to generate QR from PayOS EMV string:', err)
+    payosQrDataUrl.value = ''
+  } finally {
+    qrLoading.value = false
+  }
+}, { immediate: true })
 
 const generatedVietQrUrl = computed(() => {
   if (!vietQrClient) return ''
@@ -344,8 +390,9 @@ const generatedVietQrUrl = computed(() => {
   return typeof generated === 'string' ? generated : ''
 })
 
+// Ưu tiên: QR render từ EMV của PayOS → VietQR → qrUrl từ API
 const displayQrUrl = computed(() => {
-  return generatedVietQrUrl.value || paymentInfo.value.qrUrl
+  return payosQrDataUrl.value || generatedVietQrUrl.value || paymentInfo.value.qrUrl
 })
 
 const formatPrice = (price) => {
@@ -379,6 +426,29 @@ const copyToClipboard = async (value, label) => {
   }
 }
 
+// Huỷ auto-redirect countdown
+const cancelRedirect = () => {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
+  }
+  autoRedirectCountdown.value = 0
+}
+
+// Bắt đầu đếm ngược rồi auto-redirect đến PayOS
+const startAutoRedirect = (url, seconds = 3) => {
+  if (!url || redirecting.value) return
+  autoRedirectCountdown.value = seconds
+  countdownTimer = setInterval(() => {
+    autoRedirectCountdown.value -= 1
+    if (autoRedirectCountdown.value <= 0) {
+      clearInterval(countdownTimer)
+      countdownTimer = null
+      openPayOSPage()
+    }
+  }, 1000)
+}
+
 const applySavedPayment = (raw) => {
   mergePaymentInfo(raw)
 
@@ -395,7 +465,6 @@ const applySavedPayment = (raw) => {
     serviceFee: asNumber(raw.serviceFee, bookingSummary.value.serviceFee),
     totalAmount: asNumber(raw.totalAmount, bookingSummary.value.totalAmount)
   }
-  // renderPayosQr() sẽ tự kích hoạt qua watch(payosQrSource)
 }
 
 const applyPaymentFromApi = (payment, orderCode) => {
@@ -405,7 +474,6 @@ const applyPaymentFromApi = (payment, orderCode) => {
     ...bookingSummary.value,
     totalAmount: asNumber(payment.amount, bookingSummary.value.totalAmount || paymentInfo.value.amount)
   }
-  // renderPayosQr() sẽ tự kích hoạt qua watch(payosQrSource) khi paymentInfo.qrCode thay đổi
 }
 
 const fetchPaymentByOrderCode = async (orderCode) => {
@@ -428,6 +496,9 @@ const fetchPaymentByOrderCode = async (orderCode) => {
 const openPayOSPage = async () => {
   if (redirecting.value) return
   redirecting.value = true
+
+  // Dừng countdown nếu đang chạy
+  cancelRedirect()
 
   let hasCheckoutUrl = !!paymentInfo.value.checkoutUrl
   if (!hasCheckoutUrl) {
@@ -467,6 +538,11 @@ const loadPaymentInfo = async () => {
         errorMessage.value = 'Không thể tải thông tin phiên thanh toán.'
       }
     }
+
+    // Nếu có checkoutUrl từ PayOS → auto-redirect sau 3 giây
+    if (payosCheckoutUrl.value) {
+      startAutoRedirect(payosCheckoutUrl.value, 3)
+    }
   } catch (error) {
     console.error('❌ Error loading payment info:', error)
     if (!payosCheckoutUrl.value) {
@@ -477,13 +553,12 @@ const loadPaymentInfo = async () => {
   }
 }
 
-const refreshPayment = () => {
-  loading.value = true
-  loadPaymentInfo()
-}
-
 onMounted(() => {
   loadPaymentInfo()
+})
+
+onUnmounted(() => {
+  cancelRedirect()
 })
 </script>
 
@@ -533,14 +608,41 @@ onMounted(() => {
   font-size: 1.05rem;
 }
 
-.refresh-btn {
-  border: none;
-  background: transparent;
-  color: #3e3429;
+/* Auto-redirect banner */
+.redirect-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: linear-gradient(135deg, #e8f4fd, #d1eaff);
+  border: 1px solid #93c5fd;
+  border-radius: 14px;
+  padding: 0.85rem 1.1rem;
+  margin-bottom: 1rem;
+  color: #1e40af;
+  font-size: 0.97rem;
+}
+
+.redirect-banner strong {
+  font-size: 1.15rem;
+  color: #1d4ed8;
+}
+
+.cancel-redirect-btn {
+  background: #fff;
+  border: 1px solid #93c5fd;
+  color: #1e40af;
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 0.88rem;
   cursor: pointer;
-  padding: 0.5rem 0.2rem;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.cancel-redirect-btn:hover {
+  background: #eff6ff;
 }
 
 .loading,
@@ -582,6 +684,29 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 200px;
+}
+
+.qr-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: #6f6357;
+  font-size: 0.9rem;
+}
+
+.qr-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e3ddd5;
+  border-top-color: #75553c;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .qr-image {

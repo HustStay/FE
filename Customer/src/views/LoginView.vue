@@ -167,7 +167,7 @@
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
                 <input v-model="registerForm.password" :type="showRegisterPassword ? 'text' : 'password'"
-                  placeholder="Tối thiểu 8 ký tự" required />
+                  placeholder="Mật khẩu" required />
                 <svg @click="showRegisterPassword = !showRegisterPassword" class="input-icon right"
                   xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -181,16 +181,10 @@
                   <line v-if="showRegisterPassword" x1="2" x2="22" y1="2" y2="22" />
                 </svg>
               </div>
-              <p class="input-hint">Bao gồm chữ hoa, chữ thường và số để bảo mật tốt hơn.</p>
+              
             </div>
 
-            <div class="form-options">
-              <label class="checkbox-label">
-                <input type="checkbox" required />
-                <span>Tôi đồng ý với <a href="#">Điều khoản</a> và <a href="#">Chính sách bảo mật</a> của
-                  Sandstay.</span>
-              </label>
-            </div>
+            
 
             <button type="submit" class="submit-button">Tạo tài khoản</button>
           </form>
@@ -204,8 +198,10 @@
 import { ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { apiFetch } from '../utils/apiClient.js'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
+const toast = useToast()
 const route = useRoute()
 const activeTab = ref('login')
 
@@ -254,23 +250,21 @@ const handleLogin = async () => {
 
     const data = await response.json()
 
-    if (response.ok) {
-      if (data.message === "Login successful") {
-        if (data.role === 1) {
-          localStorage.setItem("token", data.token);
-          localStorage.setItem("role", data.role);
-          localStorage.setItem("userId", data.userId);
-          router.push("/home");
-        } else {
-          alert("Bạn không có quyền truy cập vào hệ thống!");
-        }
-      } else if (data.message === "Invalid username or password") {
-        alert('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!')
+    if (response.ok && data.message === "Login successful") {
+      if (data.role === 1) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("userId", data.userId);
+        router.push("/home");
+      } else {
+        toast.error("Bạn không có quyền truy cập vào hệ thống!");
       }
+    } else if (data.message === "Invalid username or password" || !response.ok) {
+      toast.error('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!')
     }
   } catch (error) {
     console.error('Login error:', error)
-    alert('Có lỗi xảy ra. Vui lòng thử lại sau!')
+    toast.error('Có lỗi xảy ra. Vui lòng thử lại sau!')
   }
 }
 
@@ -297,31 +291,29 @@ const handleRegister = async () => {
 
     const data = await response.json()
 
-    if (response.ok) {
-      if (data.message === "User registered successfully") {
-        alert('Đăng ký thành công! Vui lòng đăng nhập.')
-        // Chuyển về tab đăng nhập
-        activeTab.value = 'login'
-        // Reset form
-        registerForm.value = {
-          firstName: '',
-          lastName: '',
-          username: '',
-          password: '',
-          phone: '',
-          email: '',
-          birthdate: '',
-          address: ''
-        }
-      } else if (data.message === "Username already exists") {
-        alert('Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác!')
-      } else {
-        alert('Đăng ký thất bại. Vui lòng thử lại!')
+    if (response.ok && data.message === "User registered successfully") {
+      toast.success('Đăng ký thành công! Vui lòng đăng nhập.')
+      // Chuyển về tab đăng nhập
+      activeTab.value = 'login'
+      // Reset form
+      registerForm.value = {
+        firstName: '',
+        lastName: '',
+        username: '',
+        password: '',
+        phone: '',
+        email: '',
+        birthdate: '',
+        address: ''
       }
+    } else if (data.message === "Username already exists") {
+      toast.warning('Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác!')
+    } else {
+      toast.error(data.message || 'Đăng ký thất bại. Vui lòng thử lại!')
     }
   } catch (error) {
     console.error('Register error:', error)
-    alert('Có lỗi xảy ra. Vui lòng thử lại sau!')
+    toast.error('Có lỗi xảy ra. Vui lòng thử lại sau!')
   }
 }
 </script>

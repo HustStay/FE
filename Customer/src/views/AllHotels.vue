@@ -162,7 +162,7 @@
                       <strong>{{ formatPrice(hotel.pricePerNight) }}</strong>
                       <small>/ đêm</small>
                     </div>
-                    <button class="detail-btn" @click="goToHotelDetail(hotel.id)">Xem chi tiết</button>
+                    
                   </div>
                 </div>
               </article>
@@ -277,7 +277,6 @@ const normalizeAmenities = (amenities) => {
 const mapHotel = (hotel, index) => {
   const amenities = normalizeAmenities(hotel.amenities ?? hotel.aminities)
   const rating = Number(hotel.rating) || 0
-  // const rating = rawRating <= 5 ? rawRating * 2 : rawRating
   const pricePerNight = Number(hotel.pricePerNight) || 0
   const city = hotel.city || ''
   const location = [hotel.street, hotel.district, hotel.city, hotel.country].filter(Boolean).join(', ')

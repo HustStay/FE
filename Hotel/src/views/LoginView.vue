@@ -59,6 +59,9 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { apiFetch } from "../utils/apiClient.js";
+import { useToast } from '@/composables/useToast';
+
+const toast = useToast();
 
 const router = useRouter();
 
@@ -113,15 +116,15 @@ const handleLogin = async () => {
 
           router.push("/home");
         } else {
-          alert("Bạn không có quyền truy cập vào hệ thống!");
+          toast.error("Bạn không có quyền truy cập vào hệ thống!");
         }
       } else if (data.message === "Invalid username or password") {
-        alert("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!");
+        toast.error("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin!");
       }
     }
   } catch (error) {
     console.error("Login error:", error);
-    alert("Có lỗi xảy ra. Vui lòng thử lại sau!");
+    toast.error("Có lỗi xảy ra. Vui lòng thử lại sau!");
   }
 };
 </script>

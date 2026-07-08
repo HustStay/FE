@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import axios from 'axios'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -57,7 +60,7 @@ const toggleStatus = async (account) => {
     })
     account.status = newStatus
   } catch (err) {
-    alert(err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái')
+    toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái')
   }
 }
 
@@ -93,10 +96,10 @@ const removeReview = async (review) => {
     if (response.data.message === 'Comment deleted successfully') {
       reviews.value = reviews.value.filter(r => r.commentId !== review.commentId)
     } else {
-      alert(response.data.message || 'Không thể xóa đánh giá')
+      toast.warning(response.data.message || 'Không thể xóa đánh giá')
     }
   } catch (err) {
-    alert(err.response?.data?.message || 'Có lỗi xảy ra khi xóa đánh giá')
+    toast.error(err.response?.data?.message || 'Có lỗi xảy ra khi xóa đánh giá')
   }
 }
 

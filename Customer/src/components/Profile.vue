@@ -15,9 +15,6 @@
                         </p>
                     </div>
                 </div>
-                <button class="edit-profile-btn" type="button">
-                    Chỉnh sửa hồ sơ
-                </button>
             </div>
 
             <div class="profile-grid">
@@ -55,8 +52,8 @@
                     </div>
 
                     <div class="card-actions">
-                        <button class="btn-secondary" type="button">Hủy</button>
-                        <button class="btn-primary" type="button">Lưu thay đổi</button>
+                        <button class="btn-secondary" type="button" @click="fetchProfile">Hủy</button>
+                        <button class="btn-primary" type="button" @click="updateProfileInfo">Lưu thay đổi</button>
                     </div>
                 </section>
 
@@ -112,6 +109,9 @@
 import { ref, computed, onMounted } from 'vue'
 import Navbar from '@/components/Navbar.vue'
 import { apiFetch } from '../utils/apiClient.js'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 const userProfile = ref({
     email: '',
@@ -207,18 +207,18 @@ const fetchProfile = async () => {
                 }
             }
             else if (data.message === "User not found") {
-                alert('Người dùng không tồn tại!')
+                toast.warning('Người dùng không tồn tại!')
             }
         }
     } catch (error) {
         console.error('Error fetching profile:', error)
-        alert('Có lỗi xảy ra khi tải thông tin!')
+        toast.error('Có lỗi xảy ra khi tải thông tin!')
     }
 }
 
 const changePassword = async () => {
     if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-        alert('Mật khẩu mới không khớp!')
+        toast.warning('Mật khẩu mới không khớp!')
         return
     }
 
@@ -239,17 +239,54 @@ const changePassword = async () => {
         const data = await response.json()
         if (response.ok) {
             if (data.message === "Password updated successfully") {
-                alert('Đổi mật khẩu thành công!')
+                toast.success('Đổi mật khẩu thành công!')
                 passwordForm.value.oldPassword = ''
                 passwordForm.value.newPassword = ''
                 passwordForm.value.confirmPassword = ''
+                showPasswordForm.value = false
             } else if (data.message === "Password updated failed") {
-                alert('Đổi mật khẩu thất bại!')
+                toast.error('Đổi mật khẩu thất bại!')
             }
         }
     } catch (error) {
         console.error('Error changing password:', error)
-        alert('Có lỗi xảy ra!')
+        toast.error('Có lỗi xảy ra!')
+    }
+}
+
+const updateProfileInfo = async () => {
+    try {
+        const token = localStorage.getItem('token')
+        if (!token) {
+            window.location.href = '/'
+            return
+        }
+
+        const response = await apiFetch('/api/user-service/profile', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                fullName: userProfile.value.fullName,
+                email: userProfile.value.email,
+                phone: userProfile.value.phone,
+                address: userProfile.value.address,
+                birth: userProfile.value.birth
+            })
+        })
+
+        const data = await response.json()
+
+        if (response.ok && data.message === "Profile updated successfully") {
+            toast.success('Cập nhật thông tin thành công!')
+        } else {
+            toast.error(data.message || 'Có lỗi xảy ra khi cập nhật thông tin!')
+        }
+    } catch (error) {
+        console.error('Error updating profile:', error)
+        toast.error('Có lỗi xảy ra khi cập nhật thông tin!')
     }
 }
 

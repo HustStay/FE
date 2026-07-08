@@ -11,81 +11,28 @@
         </div>
         <button class="add-staff-btn" @click="showAddModal = true">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            <path
+              d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
           </svg>
           Thêm nhân viên
         </button>
       </div>
 
-      <!-- Stats Cards
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-info">
-              <p class="stat-label">Tổng nhân viên</p>
-              <h2 class="stat-value">{{ accounts.length }}</h2>
-            </div>
-            <div class="stat-icon blue">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-info">
-              <p class="stat-label">Lễ tân</p>
-              <h2 class="stat-value">{{ countByRole('receptionist') }}</h2>
-            </div>
-            <div class="stat-icon green">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-info">
-              <p class="stat-label">CSKH</p>
-              <h2 class="stat-value">{{ countByRole('customer_support') }}</h2>
-            </div>
-            <div class="stat-icon yellow">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-content">
-            <div class="stat-info">
-              <p class="stat-label">Nội dung</p>
-              <h2 class="stat-value">{{ countByRole('content_staff') }}</h2>
-            </div>
-            <div class="stat-icon orange">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div> -->
+      
 
       <!-- Filters -->
       <div class="filters">
         <div class="search-box">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            <path
+              d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
           </svg>
           <input type="text" placeholder="Tìm kiếm theo tên, email, username..." v-model="searchQuery" />
         </div>
         <select class="filter-select" v-model="roleFilter">
           <option value="">Tất cả vai trò</option>
           <option value="receptionist">Lễ tân</option>
-          <option value="customer_support">CSKH</option>
-          <option value="content_staff">Nội dung</option>
+          <option value="content-staff">Nội dung</option>
         </select>
       </div>
 
@@ -93,7 +40,8 @@
       <div class="table-container">
         <div class="table-header">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+            <path
+              d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
           </svg>
           <h3>Danh sách nhân viên ({{ filteredAccounts.length }})</h3>
         </div>
@@ -102,7 +50,7 @@
           <table class="staff-table">
             <thead>
               <tr>
-                <!-- <th>ID</th> -->
+                
                 <th>Username</th>
                 <th>Họ tên</th>
                 <th>Email</th>
@@ -116,14 +64,15 @@
                 <td colspan="7" class="empty-row">
                   <div class="empty-state">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                      <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                     </svg>
                     <p>Chưa có nhân viên nào</p>
                   </div>
                 </td>
               </tr>
               <tr v-for="account in filteredAccounts" :key="account.id">
-                <!-- <td class="id-cell">#{{ account.id }}</td> -->
+                
                 <td>
                   <div class="user-info">
                     <div class="user-avatar">{{ getInitials(account.fullName) }}</div>
@@ -134,14 +83,10 @@
                 <td class="email-cell">{{ account.email }}</td>
                 <td>
                   <div class="role-cell">
-                    <select
-                      :class="['role-select', getRoleClass(account.role)]"
-                      :value="account.role"
-                      @change="handleRoleChange(account, $event)"
-                    >
+                    <select :class="['role-select', getRoleClass(account.role)]" :value="account.role"
+                      @change="handleRoleChange(account, $event)">
                       <option value="receptionist">Lễ tân</option>
-                      <option value="customer_support">CSKH</option>
-                      <option value="content_staff">Nội dung</option>
+                      <option value="content-staff">Nội dung</option>
                     </select>
                   </div>
                 </td>
@@ -152,16 +97,16 @@
                 </td>
                 <td>
                   <div class="action-buttons">
-                    <button
-                      class="action-button lock-button"
-                      @click="toggleLockAccount(account)"
-                      :title="account.active ? 'Khóa tài khoản' : 'Mở khóa'"
-                    >
-                      <svg v-if="account.active" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                    <button class="action-button lock-button" @click="toggleLockAccount(account)"
+                      :title="account.active ? 'Khóa tài khoản' : 'Mở khóa'">
+                      <svg v-if="account.active" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                        fill="currentColor">
+                        <path
+                          d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
                       </svg>
                       <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/>
+                        <path
+                          d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z" />
                       </svg>
                     </button>
                   </div>
@@ -180,7 +125,8 @@
           <h2>Thêm nhân viên mới</h2>
           <button class="modal-close" @click="closeAddModal">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+              <path
+                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
             </svg>
           </button>
         </div>
@@ -215,8 +161,7 @@
               <select v-model="newStaff.role" required>
                 <option value="" disabled>Chọn vai trò</option>
                 <option value="receptionist">Lễ tân</option>
-                <option value="customer_support">CSKH</option>
-                <option value="content_staff">Nội dung</option>
+                <option value="content-staff">Nội dung</option>
               </select>
             </div>
           </div>
@@ -241,15 +186,29 @@
       </div>
     </div>
 
-    <!-- Toast notification -->
-    <div class="toast" :class="{ show: toast.show, success: toast.type === 'success', error: toast.type === 'error' }">
-      <svg v-if="toast.type === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-      </svg>
-      <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>
-      </svg>
-      <span>{{ toast.message }}</span>
+    <!-- Custom Confirm Modal -->
+    <div class="modal-overlay" v-if="showConfirmModal" @click.self="cancelConfirm">
+      <div class="confirm-modal">
+        <div class="confirm-icon" :class="confirmActionType">
+          <svg v-if="confirmActionType === 'warning'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+            fill="currentColor">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+          </svg>
+          <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+          </svg>
+        </div>
+        <div class="confirm-content">
+          <h3>{{ confirmTitle }}</h3>
+          <p>{{ confirmMessage }}</p>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn-cancel" @click="cancelConfirm">Hủy</button>
+          <button class="btn-confirm" :class="confirmActionType" @click="executeConfirm">Xác nhận</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -258,16 +217,19 @@
 import { ref, computed, onMounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
 import { apiFetch } from '../utils/apiClient.js'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 // Role name -> roleId mapping (must match DB roles table)
 const ROLE_MAP = {
   'receptionist': 4,
-  'content_staff': 5
+  'content-staff': 5
 }
 
 const ROLE_LABELS = {
   'receptionist': 'Lễ tân',
-  'content_staff': 'Nội dung'
+  'content-staff': 'Nội dung'
 }
 
 const searchQuery = ref('')
@@ -275,7 +237,33 @@ const roleFilter = ref('')
 const accounts = ref([])
 const showAddModal = ref(false)
 const isSubmitting = ref(false)
-const toast = ref({ show: false, message: '', type: 'success' })
+
+// Confirm Modal State
+const showConfirmModal = ref(false)
+const confirmTitle = ref('')
+const confirmMessage = ref('')
+const confirmActionType = ref('warning')
+let confirmCallback = null
+
+const openConfirm = (title, message, type, callback) => {
+  confirmTitle.value = title
+  confirmMessage.value = message
+  confirmActionType.value = type
+  confirmCallback = callback
+  showConfirmModal.value = true
+}
+
+const cancelConfirm = () => {
+  showConfirmModal.value = false
+  confirmCallback = null
+}
+
+const executeConfirm = () => {
+  if (confirmCallback) {
+    confirmCallback()
+  }
+  cancelConfirm()
+}
 
 const newStaff = ref({
   fullName: '',
@@ -290,13 +278,6 @@ const newStaff = ref({
 
 const getToken = () => localStorage.getItem('token')
 
-const showToast = (message, type = 'success') => {
-  toast.value = { show: true, message, type }
-  setTimeout(() => {
-    toast.value.show = false
-  }, 3000)
-}
-
 const getInitials = (name) => {
   if (!name) return '?'
   const parts = name.trim().split(' ')
@@ -309,14 +290,11 @@ const getInitials = (name) => {
 const getRoleClass = (role) => {
   const roleClasses = {
     'receptionist': 'role-receptionist',
-    'content_staff': 'role-content'
+    'content-staff': 'role-content'
   }
   return roleClasses[role] || ''
 }
 
-// const countByRole = (roleName) => {
-//   return accounts.value.filter(a => a.role === roleName).length
-// }
 
 const filteredAccounts = computed(() => {
   return accounts.value.filter(account => {
@@ -345,7 +323,7 @@ const fetchAccounts = async () => {
     })
 
     if (response.status === 401) {
-      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
       localStorage.removeItem('token')
       localStorage.removeItem('role')
       window.location.href = '/'
@@ -361,7 +339,7 @@ const fetchAccounts = async () => {
     }
   } catch (error) {
     console.error('Fetch accounts error:', error)
-    showToast('Có lỗi xảy ra khi tải danh sách nhân viên!', 'error')
+    toast.error('Có lỗi xảy ra khi tải danh sách nhân viên!')
   }
 }
 
@@ -374,7 +352,7 @@ const handleAddStaff = async () => {
     const roleId = ROLE_MAP[newStaff.value.role]
 
     if (!roleId) {
-      showToast('Vui lòng chọn vai trò!', 'error')
+      toast.error('Vui lòng chọn vai trò!')
       isSubmitting.value = false
       return
     }
@@ -402,22 +380,22 @@ const handleAddStaff = async () => {
     const data = await response.json()
 
     if (response.ok && data.message === 'Account added successfully') {
-      showToast('Tạo tài khoản nhân viên thành công!')
+      toast.success('Tạo tài khoản nhân viên thành công!')
       closeAddModal()
       fetchAccounts()
     } else {
-      showToast(data.message || 'Tạo tài khoản thất bại!', 'error')
+      toast.error(data.message || 'Tạo tài khoản thất bại!')
     }
   } catch (error) {
     console.error('Add staff error:', error)
-    showToast('Có lỗi xảy ra khi tạo tài khoản!', 'error')
+    toast.error('Có lỗi xảy ra khi tạo tài khoản!')
   } finally {
     isSubmitting.value = false
   }
 }
 
 // Update role
-const handleRoleChange = async (account, event) => {
+const handleRoleChange = (account, event) => {
   const newRole = event.target.value
   const newRoleId = ROLE_MAP[newRole]
 
@@ -425,71 +403,82 @@ const handleRoleChange = async (account, event) => {
 
   const oldRole = account.role
 
-  if (confirm(`Xác nhận đổi vai trò nhân viên "${account.fullName}" thành "${ROLE_LABELS[newRole]}"?`)) {
-    try {
-      const token = getToken()
-      const response = await apiFetch('/api/user-service/updateRole', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: account.id,
-          roleId: newRoleId
+  openConfirm(
+    'Xác nhận đổi vai trò',
+    `Bạn có chắc chắn muốn đổi vai trò nhân viên "${account.fullName}" thành "${ROLE_LABELS[newRole]}"?`,
+    'warning',
+    async () => {
+      try {
+        const token = getToken()
+        const response = await apiFetch('/api/user-service/updateRole', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: account.id,
+            roleId: newRoleId
+          })
         })
-      })
 
-      const data = await response.json()
+        const data = await response.json()
 
-      if (response.ok && data.message === 'Update role successfully') {
-        account.role = newRole
-        showToast(`Đã cập nhật vai trò thành "${ROLE_LABELS[newRole]}"`)
-      } else {
+        if (response.ok && data.message === 'Update role successfully') {
+          account.role = newRole
+          toast.success(`Đã cập nhật vai trò thành "${ROLE_LABELS[newRole]}"`)
+        } else {
+          event.target.value = oldRole
+          toast.error(data.message || 'Cập nhật vai trò thất bại!')
+        }
+      } catch (error) {
         event.target.value = oldRole
-        showToast(data.message || 'Cập nhật vai trò thất bại!', 'error')
+        console.error('Update role error:', error)
+        toast.error('Có lỗi xảy ra khi cập nhật vai trò!')
       }
-    } catch (error) {
-      event.target.value = oldRole
-      console.error('Update role error:', error)
-      showToast('Có lỗi xảy ra khi cập nhật vai trò!', 'error')
     }
-  } else {
-    event.target.value = oldRole
-  }
+  )
+
+  // Revert UI select immediately, real change happens in callback if confirmed
+  event.target.value = oldRole
 }
 
 // Toggle lock account
-const toggleLockAccount = async (account) => {
+const toggleLockAccount = (account) => {
   const action = account.active ? 'khóa' : 'mở khóa'
-  if (confirm(`Xác nhận ${action} tài khoản "${account.fullName}"?`)) {
-    try {
-      const token = getToken()
-      const response = await apiFetch('/api/user-service/lockAccount', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: account.id,
-          active: !account.active
+  openConfirm(
+    `Xác nhận ${action}`,
+    `Bạn có chắc chắn muốn ${action} tài khoản "${account.fullName}"?`,
+    'warning',
+    async () => {
+      try {
+        const token = getToken()
+        const response = await apiFetch('/api/user-service/lockAccount', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: account.id,
+            active: !account.active
+          })
         })
-      })
 
-      const data = await response.json()
+        const data = await response.json()
 
-      if (response.ok && data.message === 'Update account active successfully') {
-        account.active = !account.active
-        showToast(`Đã ${action} tài khoản thành công!`)
-      } else {
-        showToast(data.message || `${action} tài khoản thất bại!`, 'error')
+        if (response.ok && data.message === 'Update account active successfully') {
+          account.active = !account.active
+          toast.success(`Đã ${action} tài khoản thành công!`)
+        } else {
+          toast.error(data.message || `${action} tài khoản thất bại!`)
+        }
+      } catch (error) {
+        console.error('Toggle lock error:', error)
+        toast.error('Có lỗi xảy ra!')
       }
-    } catch (error) {
-      console.error('Toggle lock error:', error)
-      showToast('Có lỗi xảy ra!', 'error')
     }
-  }
+  )
 }
 
 const closeAddModal = () => {
@@ -636,10 +625,21 @@ onMounted(() => {
   color: white;
 }
 
-.stat-icon.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.stat-icon.green { background: linear-gradient(135deg, #10b981, #059669); }
-.stat-icon.yellow { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.stat-icon.orange { background: linear-gradient(135deg, #f97316, #ea580c); }
+.stat-icon.blue {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.stat-icon.green {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.stat-icon.yellow {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.stat-icon.orange {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
 
 /* Filters */
 .filters {
@@ -940,8 +940,13 @@ onMounted(() => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modal {
@@ -956,8 +961,15 @@ onMounted(() => {
 }
 
 @keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .modal-header {
@@ -1107,7 +1119,9 @@ onMounted(() => {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Toast */
@@ -1204,6 +1218,103 @@ onMounted(() => {
 @media (max-width: 480px) {
   .main-content {
     padding: 16px;
+  }
+}
+
+/* Confirm Modal Styles */
+.confirm-modal {
+  background: white;
+  width: 90%;
+  max-width: 420px;
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirm-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirm-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.confirm-icon.warning {
+  background: #fffbeb;
+  color: #f59e0b;
+}
+
+.confirm-content h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 12px;
+}
+
+.confirm-content p {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 28px;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.confirm-actions button {
+  flex: 1;
+  padding: 12px 0;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel {
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+}
+
+.btn-cancel:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.btn-confirm {
+  border: none;
+  color: white;
+}
+
+.btn-confirm.warning {
+  background: #f59e0b;
+}
+
+.btn-confirm.warning:hover {
+  background: #d97706;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 </style>

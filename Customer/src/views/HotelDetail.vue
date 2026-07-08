@@ -57,10 +57,18 @@
 
           <section class="rooms-section">
             <h2 class="section-title">Phòng nổi bật</h2>
-            <div class="room-list">
-              <div v-for="room in roomTypes" :key="room.id" class="room-row">
+          <div class="room-list">
+              <div 
+                v-for="room in roomTypes" 
+                :key="room.id" 
+                :class="['room-row', { 'room-row--unavailable': room.available === 0 }]"
+              >
                 <div class="room-info">
-                  <h3 class="room-name-title">{{ room.name }}</h3>
+                  <div class="room-name-wrapper">
+                    <h3 class="room-name-title">{{ room.name }}</h3>
+                    <span v-if="room.available === 0" class="badge-soldout">Hết phòng</span>
+                    <span v-else class="badge-available">{{ room.available }} phòng trống</span>
+                  </div>
                   <p class="room-specs">Tối đa {{ room.capacity }} khách</p>
                   <p class="room-specs-sub" v-if="room.description">{{ room.description }}</p>
                 </div>
@@ -69,7 +77,13 @@
                   <div class="price-tax">đã bao gồm thuế</div>
                 </div>
                 <div class="room-action">
-                  <button v-if="!isRoomSelected(room.id)" class="select-btn" @click="toggleRoom(room)" :disabled="room.available === 0">
+                  <button 
+                    v-if="!isRoomSelected(room.id)" 
+                    :class="['select-btn', { 'select-btn--soldout': room.available === 0 }]" 
+                    @click="toggleRoom(room)" 
+                    :disabled="room.available === 0"
+                  >
+                    <svg v-if="room.available === 0" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                     {{ room.available === 0 ? 'Hết phòng' : 'Chọn phòng' }}
                   </button>
                   <div v-else class="qty-selector-wrap">
@@ -94,7 +108,7 @@
               <div class="rating-text">Dựa trên {{ reviews.length }} đánh giá</div>
             </div>
 
-            <div class="comment-form-modern">
+            <div class="comment-form-modern" v-if="canReview">
               <h4>Viết đánh giá của bạn</h4>
               <div class="star-rating-input">
                 <div class="stars-input">
@@ -122,15 +136,25 @@
             
             <div class="reviews-list-modern">
               <div v-for="review in reviews" :key="review.id" class="review-card-modern">
-                <div class="reviewer-avatar-modern">{{ review.avatar }}</div>
-                <div class="review-content">
-                  <div class="review-header-top">
-                    <h4 class="reviewer-name-modern">{{ review.name }}</h4>
-                    <span class="review-date-modern">{{ review.date }}</span>
+                <div class="review-header-wrapper">
+                  <div class="reviewer-info">
+                    <div class="reviewer-avatar-modern">
+                      <img v-if="review.avatarImg" :src="review.avatarImg" />
+                      <span v-else>{{ review.avatar }}</span>
+                    </div>
+                    <div class="reviewer-details">
+                      <h4 class="reviewer-name-modern">{{ review.name }}</h4>
+                    </div>
                   </div>
-                  <div class="review-stars-modern">
-                    <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= review.rating }">★</span>
+                  <div class="review-rating-right">
+                    <div class="review-stars-modern">
+                      <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= review.rating }">★</span>
+                    </div>
+                    <div class="rating-number-badge">{{ review.rating ? review.rating.toFixed(1) : '5.0' }}</div>
                   </div>
+                </div>
+                
+                <div class="review-body">
                   <p class="review-text-modern">{{ review.comment }}</p>
                 </div>
               </div>
@@ -140,15 +164,9 @@
 
         <aside class="right-sidebar">
           <div class="booking-card">
-            <div class="booking-price-header">
-              <div class="price-left">
-                <div class="price-main">{{ formatPrice(calculateTotalAmount() > 0 ? (calculateTotalAmount() / calculateNights()) : (roomTypes[0] ? roomTypes[0].pricePerNight : 0)) }}</div>
-                <div class="price-sub">/ đêm - đã bao gồm thuế</div>
-              </div>
-              <div class="rating-badge-small">
-                <span class="star">★</span> {{ hotel.rating }}
-              </div>
-            </div>
+            
+              
+            <!-- </div> -->
 
             <div class="booking-inputs-wrap">
               <div class="date-picker-row">
@@ -202,10 +220,16 @@
               </div>
             </div>
 
-            <button class="book-action-btn" @click="bookNow" :disabled="selectedRooms.length === 0">
-              {{ selectedRooms.length === 0 ? 'Chọn phòng để đặt' : 'Thanh toán ngay' }}
+            <button class="book-action-btn" @click="bookNow" :disabled="selectedRooms.length === 0 || isBookingPending">
+              <span v-if="isBookingPending" class="loading-dots">
+                <span>Đang xử lý</span>
+                <span class="dot-anim">...</span>
+              </span>
+              <span v-else>
+                {{ selectedRooms.length === 0 ? 'Chọn phòng để đặt' : 'Đặt phòng ngay' }}
+              </span>
             </button>
-            <div class="cancel-note">Miễn phí hủy trước 48 giờ - Chưa thanh toán</div>
+            <div class="cancel-note">Miễn phí hủy - Chưa thanh toán</div>
 
             <div class="summary-breakdown" v-if="selectedRooms.length > 0 && booking.checkIn && booking.checkOut">
               <div class="breakdown-line">
@@ -232,9 +256,10 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
-import ChatWidget from '@/components/ChatWidget.vue'
 import { apiFetch } from '../utils/apiClient.js'
+import { useToast } from '@/composables/useToast'
 
+const toast = useToast()
 const router = useRouter()
 const hotelId = router.currentRoute.value.params.id
 
@@ -270,6 +295,7 @@ const newComment = ref({
 })
 const hoverStar = ref(0)
 const isSubmittingComment = ref(false)
+const canReview = ref(false)
 
 // normalize amenities into array
 const amenitiesList = ref([])
@@ -337,7 +363,7 @@ const fetchRooms = async () => {
         totalRooms: room.totalRooms,
         description: room.description,
         amenities: room.amenities,
-        pricePerNight: room.pricePerNight * 1000000, // Convert to VND (assuming API returns in millions)
+        pricePerNight: room.pricePerNight, // Already in VND
       }))
     }
   } catch (error) {
@@ -388,12 +414,12 @@ const formatCommentDate = (dateString) => {
 
 const submitComment = async () => {
   if (!newComment.value.comment.trim()) {
-    alert('Vui lòng nhập nội dung đánh giá')
+    toast.warning('Vui lòng nhập nội dung đánh giá')
     return
   }
 
   if (newComment.value.star < 1 || newComment.value.star > 5) {
-    alert('Vui lòng chọn số sao từ 1 đến 5')
+    toast.warning('Vui lòng chọn số sao từ 1 đến 5')
     return
   }
 
@@ -417,20 +443,45 @@ const submitComment = async () => {
     const result = await response.json()
 
     if (response.ok) {
-      alert(result.message || 'Đánh giá đã được gửi thành công!')
+      toast.success(result.message || 'Đánh giá đã được gửi thành công!')
       // Reset form
       newComment.value.comment = ''
       newComment.value.star = 5
       // Refresh comments list from API
       await fetchComments()
     } else {
-      alert(result.message || 'Không thể gửi đánh giá. Vui lòng thử lại!')
+      toast.error(result.message || 'Không thể gửi đánh giá. Vui lòng thử lại!')
     }
   } catch (error) {
     console.error('Error submitting comment:', error)
-    alert('Đã xảy ra lỗi khi gửi đánh giá. Vui lòng thử lại!')
+    toast.error('Đã xảy ra lỗi khi gửi đánh giá. Vui lòng thử lại!')
   } finally {
     isSubmittingComment.value = false
+  }
+}
+
+const checkCanReview = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    const response = await apiFetch(`/api/booking-service/bookings`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      if (data.bookings && data.bookings.length > 0) {
+        canReview.value = data.bookings.some(b => 
+          b.hotelId === Number(hotelId) && b.status === 'COMPLETED'
+        )
+      }
+    }
+  } catch (error) {
+    console.error('Error checking review eligibility:', error)
   }
 }
 
@@ -438,6 +489,7 @@ onMounted(() => {
   fetchHotelDetail()
   fetchRooms()
   fetchComments()
+  checkCanReview()
 })
 
 const booking = ref({ checkIn: '', checkOut: '', guests: 2 })
@@ -564,42 +616,36 @@ const selectDate = (day, type) => {
   else showCheckOutCal.value = false
 }
 
+const isBookingPending = ref(false)
+
 const bookNow = async () => {
   // Validate inputs
   if (selectedRooms.value.length === 0) {
-    alert('Vui lòng chọn ít nhất một loại phòng')
+    toast.warning('Vui lòng chọn ít nhất một loại phòng')
     return
   }
 
   if (!booking.value.checkIn || !booking.value.checkOut) {
-    alert('Vui lòng chọn ngày nhận phòng và trả phòng')
+    toast.warning('Vui lòng chọn ngày nhận phòng và trả phòng')
     return
   }
 
   if (!booking.value.guests || booking.value.guests < 1) {
-    alert('Vui lòng nhập số khách hợp lệ')
+    toast.warning('Vui lòng nhập số khách hợp lệ')
     return
   }
 
   // Check if check-out is after check-in
   if (new Date(booking.value.checkOut) <= new Date(booking.value.checkIn)) {
-    alert('Ngày trả phòng phải sau ngày nhận phòng')
+    toast.warning('Ngày trả phòng phải sau ngày nhận phòng')
     return
   }
 
+  if (isBookingPending.value) return
+  isBookingPending.value = true
+
   try {
     const token = localStorage.getItem('token')
-
-    // Calculate total amount
-    const totalAmount = selectedRooms.value.reduce((sum, room) => {
-      return sum + (room.pricePerNight * room.quantity)
-    }, 0)
-
-    // Calculate number of nights
-    const checkInDate = new Date(booking.value.checkIn)
-    const checkOutDate = new Date(booking.value.checkOut)
-    const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24))
-    const finalAmount = totalAmount * nights
 
     // Build bookingItems array from selected rooms
     const bookingItems = selectedRooms.value.map(room => ({
@@ -608,7 +654,6 @@ const bookNow = async () => {
       fee: room.pricePerNight
     }))
 
-    // Create single booking request with all items
     const bookingData = {
       hotelId: parseInt(hotelId),
       checkInDate: booking.value.checkIn,
@@ -618,10 +663,10 @@ const bookNow = async () => {
       bookingItems: bookingItems
     }
 
-    console.log('🏨 Creating booking with data:', bookingData)
+    console.log('🏨 Submitting booking request:', bookingData)
 
-    // Step 1: Create booking
-    const bookingResponse = await apiFetch('/api/booking-service/booking', {
+    // Bước 1: Gửi yêu cầu đặt phòng → nhận requestId
+    const submitResponse = await apiFetch('/api/booking-service/booking', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -630,89 +675,67 @@ const bookNow = async () => {
       body: JSON.stringify(bookingData)
     })
 
-    const bookingResult = await bookingResponse.json()
-    const createdBookingId =
-      bookingResult?.bookingId ??
-      bookingResult?.id ??
-      bookingResult?.data?.bookingId ??
-      bookingResult?.data?.id
+    const submitResult = await submitResponse.json()
 
-    if (bookingResponse.ok) {
-      console.log('✅ Booking created successfully:', bookingResult)
-
-      if (!createdBookingId) {
-        console.error('❌ Booking created but bookingId is missing:', bookingResult)
-        alert('Đặt phòng thành công nhưng không nhận được mã booking từ hệ thống.')
-        router.push('/bookings')
-        return
-      }
-
-      // Step 2: Create PayOS payment link
-      const paymentData = {
-        bookingId: createdBookingId,
-        amount: Math.round(finalAmount),
-        description: `Thanh toán đặt phòng ${hotel.value.hotelName} - ${nights} đêm`,
-        customerName: localStorage.getItem('fullName') || 'Khách hàng',
-        customerEmail: localStorage.getItem('email') || '',
-        hotelName: hotel.value.hotelName,
-        checkInDate: booking.value.checkIn,
-        checkOutDate: booking.value.checkOut
-      }
-
-      console.log('💳 Creating PayOS payment link with data:', paymentData)
-
-      const paymentResponse = await apiFetch('/api/payment-service/payos/create-payment-link', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(paymentData)
-      })
-
-      const paymentResult = await paymentResponse.json().catch(() => ({}))
-
-      if (paymentResponse.ok && paymentResult.sessionUrl) {
-        console.log('✅ Payment session created:', paymentResult)
-
-        // Save hotel ID for potential cancel page navigation
-        sessionStorage.setItem('lastHotelId', hotelId)
-        sessionStorage.setItem('pendingPayment', JSON.stringify({
-          bookingId: createdBookingId,
-          amount: paymentResult.amount ?? Math.round(finalAmount),
-          orderCode: paymentResult.sessionId,
-          checkoutUrl: paymentResult.sessionUrl,
-          hotelName: hotel.value.hotelName,
-          hotelImage: selectedImage.value || (images.value[0] || ''),
-          location: [hotel.value.street, hotel.value.district, hotel.value.city, hotel.value.country].filter(Boolean).join(', '),
-          checkInDate: booking.value.checkIn,
-          checkOutDate: booking.value.checkOut,
-          guests: booking.value.guests,
-          nights,
-          roomSubtotal: Math.round(finalAmount),
-          taxFee: 0,
-          serviceFee: 0,
-          totalAmount: paymentResult.amount ?? Math.round(finalAmount)
-        }))
-
-        // Step 3: Go to internal checkout page first
-        const query = paymentResult.sessionId ? { orderCode: paymentResult.sessionId } : {}
-        router.push({ path: '/payment/checkout', query })
-      } else {
-        console.error('❌ Payment session creation failed:', paymentResult)
-        const backendMessage = paymentResult?.message ? `\nChi tiết: ${paymentResult.message}` : ''
-        alert(`Đặt phòng thành công nhưng không thể tạo phiên thanh toán. Mã booking: ${createdBookingId}${backendMessage}`)
-        router.push('/bookings')
-      }
-    } else {
-      console.error('❌ Booking creation failed:', bookingResult)
-      alert(`Đặt phòng thất bại: ${bookingResult.message || 'Vui lòng thử lại'}`)
+    if (!submitResponse.ok) {
+      toast.error(submitResult.message || 'Không thể gửi yêu cầu đặt phòng.')
+      return
     }
+
+    const requestId = submitResult.requestId
+    console.log('⏳ Booking request submitted, requestId:', requestId)
+    toast.info('Đang xử lý yêu cầu đặt phòng của bạn...')
+
+    // Bước 2: Polling mỗi 1.5 giây để kiểm tra kết quả
+    let attempts = 0
+    const maxAttempts = 40 // Tối đa 60 giây chờ
+
+    const pollResult = await new Promise((resolve) => {
+      const interval = setInterval(async () => {
+        attempts++
+        try {
+          const statusResponse = await apiFetch(`/api/booking-service/booking/status/${requestId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          const statusResult = await statusResponse.json()
+          console.log(`📡 Poll attempt ${attempts}:`, statusResult)
+
+          if (statusResult.status === 'SUCCESS') {
+            clearInterval(interval)
+            resolve({ success: true, bookingId: statusResult.bookingId })
+          } else if (statusResult.status === 'FAILED') {
+            clearInterval(interval)
+            resolve({ success: false, message: statusResult.message })
+          } else if (attempts >= maxAttempts) {
+            clearInterval(interval)
+            resolve({ success: false, message: 'Quá thời gian chờ. Vui lòng kiểm tra lại danh sách đặt phòng.' })
+          }
+        } catch (err) {
+          console.error('Polling error:', err)
+          if (attempts >= maxAttempts) {
+            clearInterval(interval)
+            resolve({ success: false, message: 'Không thể kiểm tra kết quả. Vui lòng kiểm tra danh sách đặt phòng.' })
+          }
+        }
+      }, 1500)
+    })
+
+    // Bước 3: Xử lý kết quả
+    if (pollResult.success) {
+      toast.success('Đặt phòng thành công! Vào trang "Đặt phòng" để thanh toán.')
+      router.push('/bookings')
+    } else {
+      toast.error(pollResult.message || 'Đặt phòng thất bại. Vui lòng thử lại.')
+    }
+
   } catch (error) {
-    console.error('❌ Error in booking/payment flow:', error)
-    alert('Có lỗi xảy ra khi đặt phòng. Vui lòng thử lại.')
+    console.error('❌ Error in booking flow:', error)
+    toast.error('Có lỗi xảy ra khi đặt phòng. Vui lòng thử lại.')
+  } finally {
+    isBookingPending.value = false
   }
 }
+
 
 const toggleRoom = (room) => {
   const index = selectedRooms.value.findIndex(r => r.id === room.id)
@@ -999,6 +1022,9 @@ const calculateTotalAmount = () => {
   color: #888;
 }
 .select-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background: #614638;
   color: white;
   border: none;
@@ -1006,11 +1032,59 @@ const calculateTotalAmount = () => {
   border-radius: 50px;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.select-btn:hover:not(:disabled) {
+  background: #4e3629;
+  transform: translateY(-1px);
+}
+.select-btn--soldout {
+  background: #d1d5db !important;
+  color: #6b7280 !important;
+  cursor: not-allowed !important;
 }
 .select-btn:disabled {
-  opacity: 0.5;
+  opacity: 1;
   cursor: not-allowed;
+}
+.room-row--unavailable {
+  opacity: 0.65;
+  background: #f9f9f9 !important;
+  border-color: #e5e7eb !important;
+}
+.room-row--unavailable:hover {
+  border-color: #e5e7eb !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.03) !important;
+}
+.room-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.badge-soldout {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #fee2e2;
+  color: #dc2626;
+  letter-spacing: 0.02em;
+}
+.badge-available {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #dcfce7;
+  color: #16a34a;
+  letter-spacing: 0.02em;
 }
 .qty-selector {
   display: flex;
@@ -1119,9 +1193,23 @@ const calculateTotalAmount = () => {
 }
 .review-card-modern {
   display: flex;
-  gap: 16px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #E5E5E5;
+  flex-direction: column;
+  padding: 24px;
+  border: 1px solid #F0F0F0;
+  border-radius: 16px;
+  background: white;
+  margin-bottom: 20px;
+}
+.review-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+.reviewer-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .reviewer-avatar-modern {
   width: 48px;
@@ -1133,35 +1221,95 @@ const calculateTotalAmount = () => {
   justify-content: center;
   font-weight: 700;
   color: #614638;
+  overflow: hidden;
 }
-.review-content {
-  flex: 1;
+.reviewer-avatar-modern img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
-.review-header-top {
+.reviewer-details {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 4px;
+  flex-direction: column;
+  gap: 4px;
 }
 .reviewer-name-modern {
   margin: 0;
   font-weight: 600;
+  font-size: 1rem;
+  color: #1A1A1A;
 }
-.review-date-modern {
-  font-size: 0.8rem;
+.review-meta-modern {
+  font-size: 0.85rem;
   color: #888;
+}
+.review-rating-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .review-stars-modern .star {
   color: #E5E5E5;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
 }
 .review-stars-modern .star.filled {
-  color: #FFB800;
+  color: #C8A97E;
+}
+.rating-number-badge {
+  background: #F8F5EE;
+  color: #1A1A1A;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.review-body {
+  margin-bottom: 16px;
+}
+.review-title {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1A1A1A;
 }
 .review-text-modern {
-  color: #444;
+  color: #555;
   font-size: 0.95rem;
   line-height: 1.5;
-  margin: 8px 0 0 0;
+  margin: 0;
+}
+.review-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+}
+.verified-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #F5F5F5;
+  color: #555;
+  padding: 6px 12px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+.helpful-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 0.9rem;
+  padding: 6px 16px;
+  border: 1px solid #E5E5E5;
+  border-radius: 50px;
+  cursor: pointer;
+  background: white;
+  transition: all 0.2s;
+}
+.helpful-btn:hover {
+  background: #F9F9F9;
 }
 
 /* Right Sidebar (Booking Card) */
@@ -1444,5 +1592,22 @@ const calculateTotalAmount = () => {
     flex-direction: column;
     gap: 10px;
   }
+}
+</style>
+
+<style scoped>
+/* Loading dots animation for booking button */
+.loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+.dot-anim {
+  animation: blink 1.2s infinite;
+  letter-spacing: 2px;
 }
 </style>

@@ -73,14 +73,7 @@
                 <span class="stat-value">{{ getStatusCount(rooms, 'occupied') }}</span>
                 <span class="stat-label">Đang sử dụng</span>
               </div>
-              <!-- <div class="stat-item cleaning">
-                <span class="stat-value">{{ getStatusCount(rooms, 'cleaning') }}</span>
-                <span class="stat-label">Đang dọn</span>
-              </div>
-              <div class="stat-item maintenance">
-                <span class="stat-value">{{ getStatusCount(rooms, 'maintenance') }}</span>
-                <span class="stat-label">Bảo trì</span>
-              </div> -->
+              
             </div>
           </div>
           
@@ -129,6 +122,19 @@
                       <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                     </svg>
                     Sửa
+                  </button>
+                  <button
+                    :class="['availability-button', room.status === 'available' ? 'set-occupied' : 'set-available']"
+                    @click="handleToggleAvailability(room)"
+                    :title="room.status === 'available' ? 'Xác nhận phòng đang sử dụng' : 'Xác nhận phòng trống'"
+                  >
+                    <svg v-if="room.status === 'available'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M7 13c1.66 0 3-1.34 3-3S8.66 7 7 7s-3 1.34-3 3 1.34 3 3 3zm12-6h-8v7H3V5H1v15h2v-3h18v3h2v-9c0-2.21-1.79-4-4-4z"/>
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    {{ room.status === 'available' ? 'Check-in' : 'Check-out' }}
                   </button>
                   <button 
                     :class="['toggle-button', room.isActive ? 'deactivate' : 'activate']"
@@ -347,6 +353,9 @@
 import { ref, computed, onMounted } from 'vue'
 import Sidebar from '../components/Sidebar.vue'
 import { apiFetch } from '../utils/apiClient.js'
+import { useToast } from '@/composables/useToast'
+
+const toast = useToast()
 
 
 const searchQuery = ref('')
@@ -415,7 +424,7 @@ const fetchRooms = async () => {
     })
 
     if (response.status === 401) {
-      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
       localStorage.removeItem('token')
       localStorage.removeItem('role')
       window.location.href = '/'
@@ -450,7 +459,7 @@ const fetchRooms = async () => {
     }
   } catch (error) {
     console.error('Fetch rooms error:', error)
-    alert('Có lỗi xảy ra khi tải danh sách phòng!')
+    toast.error('Có lỗi xảy ra khi tải danh sách phòng!')
   }
 }
 
@@ -550,11 +559,11 @@ const openEditModal = async (room) => {
         showEditModal.value = true;
       }
     } else {
-      alert("Không thể lấy chi tiết phòng");
+      toast.error("Không thể lấy chi tiết phòng");
     }
   } catch (error) {
     console.error(error);
-    alert("Có lỗi xảy ra khi lấy chi tiết phòng");
+    toast.error("Có lỗi xảy ra khi lấy chi tiết phòng");
   }
 }
 
@@ -580,7 +589,7 @@ const handleUpdateRoom = async () => {
     })
 
     if (response.status === 401) {
-      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
       localStorage.removeItem('token')
       localStorage.removeItem('role')
       window.location.href = '/'
@@ -592,18 +601,59 @@ const handleUpdateRoom = async () => {
     if (response.ok) {
       if (data.message === "Cập nhật phòng thành công") {
         showEditModal.value = false
-        alert('Cập nhật phòng thành công!')
+        toast.success('Cập nhật phòng thành công!')
         // Reload rooms list
         fetchRooms()
       } else if (data.message === "Cập nhật phòng thất bại") {
-        alert('Cập nhật phòng thất bại. Vui lòng thử lại!')
+        toast.error('Cập nhật phòng thất bại. Vui lòng thử lại!')
       }
     } else {
-      alert('Có lỗi xảy ra. Vui lòng thử lại!')
+      toast.error('Có lỗi xảy ra. Vui lòng thử lại!')
     }
   } catch (error) {
     console.error('Update room error:', error)
-    alert('Có lỗi xảy ra. Vui lòng thử lại sau!')
+    toast.error('Có lỗi xảy ra. Vui lòng thử lại sau!')
+  }
+}
+
+const handleToggleAvailability = async (room) => {
+  try {
+    const token = localStorage.getItem('token')
+    const newAvailable = room.status !== 'available'
+
+    const requestBody = {
+      roomId: room.id,
+      isAvailable: newAvailable
+    }
+
+    const response = await apiFetch('/api/room-service/room/availability', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    })
+
+    if (response.status === 401) {
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
+      localStorage.removeItem('token')
+      localStorage.removeItem('role')
+      window.location.href = '/'
+      return
+    }
+
+    const data = await response.json()
+
+    if (response.ok && data.message === 'Cập nhật trạng thái phòng thành công') {
+      toast.success(newAvailable ? '✅ Phòng đã chuyển sang Trống!' : '🛏️ Phòng đang được sử dụng!')
+      fetchRooms()
+    } else {
+      toast.error('Cập nhật trạng thái thất bại. Vui lòng thử lại!')
+    }
+  } catch (error) {
+    console.error('Toggle availability error:', error)
+    toast.error('Có lỗi xảy ra. Vui lòng thử lại sau!')
   }
 }
 
@@ -627,7 +677,7 @@ const handleToggleActive = async (room) => {
     })
 
     if (response.status === 401) {
-      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
       localStorage.removeItem('token')
       localStorage.removeItem('role')
       window.location.href = '/'
@@ -637,17 +687,17 @@ const handleToggleActive = async (room) => {
     const data = await response.json()
 
     if (response.ok && data.message === "Cập nhật hoạt động phòng thành công") {
-      alert(newActiveStatus ? 'Kích hoạt phòng thành công!' : 'Vô hiệu hóa phòng thành công!')
+      toast.success(newActiveStatus ? 'Kích hoạt phòng thành công!' : 'Vô hiệu hóa phòng thành công!')
       // Reload rooms list to reflect changes
       fetchRooms()
     } else if (data.message === "Cập nhật hoạt động phòng thất bại") {
-      alert('Cập nhật hoạt động phòng thất bại. Vui lòng thử lại!')
+      toast.error('Cập nhật hoạt động phòng thất bại. Vui lòng thử lại!')
     } else {
-      alert('Có lỗi xảy ra. Vui lòng thử lại!')
+      toast.error('Có lỗi xảy ra. Vui lòng thử lại!')
     }
   } catch (error) {
     console.error('Toggle active error:', error)
-    alert('Có lỗi xảy ra. Vui lòng thử lại sau!')
+    toast.error('Có lỗi xảy ra. Vui lòng thử lại sau!')
   }
 }
 
@@ -674,7 +724,7 @@ const handleAddRoom = async () => {
     })
 
     if (response.status === 401) {
-      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
+      toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!')
       localStorage.removeItem('token')
       localStorage.removeItem('role')
       window.location.href = '/'
@@ -714,19 +764,19 @@ const handleAddRoom = async () => {
           description: ''
         }
 
-        alert('Thêm phòng thành công!')
+        toast.success('Thêm phòng thành công!')
         
         // Reload rooms list
         fetchRooms()
       } else if (data.message === "Phòng đã tồn tại") {
-        alert('Phòng đã tồn tại. Vui lòng chọn số phòng khác!')
+        toast.error('Phòng đã tồn tại. Vui lòng chọn số phòng khác!')
       }
     } else {
-      alert('Có lỗi xảy ra. Vui lòng thử lại!')
+      toast.error('Có lỗi xảy ra. Vui lòng thử lại!')
     }
   } catch (error) {
     console.error('Add room error:', error)
-    alert('Có lỗi xảy ra. Vui lòng thử lại sau!')
+    toast.error('Có lỗi xảy ra. Vui lòng thử lại sau!')
   }
 }
 </script>
@@ -1166,6 +1216,47 @@ const handleAddRoom = async () => {
   border-color: #3b82f6;
   color: #3b82f6;
   background: #eff6ff;
+}
+
+.availability-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.availability-button svg {
+  width: 13px;
+  height: 13px;
+}
+
+.availability-button.set-occupied {
+  background: #f97316;
+}
+
+.availability-button.set-occupied:hover {
+  background: #ea580c;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(249, 115, 22, 0.35);
+}
+
+.availability-button.set-available {
+  background: #22c55e;
+}
+
+.availability-button.set-available:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(34, 197, 94, 0.35);
 }
 
 .toggle-button {

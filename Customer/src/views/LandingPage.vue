@@ -7,10 +7,6 @@
           <div class="logo-icon">T</div>
           <span class="logo-text">Travelstay</span>
         </div>
-        <nav class="nav-links">
-          <a href="#">Khám phá</a>
-          <a href="#">Khách sạn</a>
-        </nav>
         <div class="nav-actions">
           <RouterLink class="login-btn" to="/login?tab=login">Đăng nhập</RouterLink>
           <RouterLink class="register-btn" to="/login?tab=register">Đăng ký</RouterLink>
@@ -36,51 +32,6 @@
             <h1 class="hero-title">Tìm chốn ấm áp cho hành<br>trình tiếp theo của bạn.</h1>
             <p class="hero-subtitle">Hơn 12,000 khách sạn boutique và resort được tuyển chọn — từ vịnh<br>ngọc Phú Quốc đến rừng thông Sa Pa.</p>
           </div>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="search-bar-wrapper">
-          <div class="search-bar">
-            <div class="search-item">
-              <span class="search-label">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                ĐIỂM ĐẾN
-              </span>
-              <input type="text" placeholder="Đà Nẵng, Hội An, Phú Quốc..." />
-            </div>
-            <div class="search-divider"></div>
-            <div class="search-item">
-              <span class="search-label">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
-                NHẬN - TRẢ PHÒNG
-              </span>
-              <input type="text" placeholder="12/05 - 16/05" />
-            </div>
-            <div class="search-divider"></div>
-            <div class="search-item">
-              <span class="search-label">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                KHÁCH & PHÒNG
-              </span>
-              <input type="text" placeholder="2 khách - 1 phòng" />
-            </div>
-            <button class="search-btn">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              Tìm kiếm
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Quick Links -->
-    <section class="quick-links">
-      <div class="container">
-        <span class="quick-label">Tìm nhanh:</span>
-        <div class="tags">
-          <button class="tag" v-for="tag in ['Đà Nẵng', 'Hội An', 'Phú Quốc', 'Sa Pa', 'TP.HCM', 'Hà Nội', 'Nha Trang', 'Đà Lạt']" :key="tag">
-            {{ tag }}
-          </button>
         </div>
       </div>
     </section>
